@@ -34,7 +34,7 @@ public class S3Service {
             throw new CustomException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
 
-        String imageUrl = cloudfrontDomain = "/" + s3Key;
+        String imageUrl = cloudfrontDomain + "/" + s3Key;
         log.info("S3업로드 완료 - key{}", imageUrl);
 
         return new S3UploadResult(s3Key, imageUrl);

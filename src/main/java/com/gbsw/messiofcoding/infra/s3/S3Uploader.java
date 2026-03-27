@@ -13,7 +13,7 @@ import java.io.InputStream;
 @Component
 @RequiredArgsConstructor
 public class S3Uploader {
-    public S3Client s3Client;
+    private final S3Client s3Client;
 
     @Value("${snapy.s3.bucket}")
     private String bucket;
