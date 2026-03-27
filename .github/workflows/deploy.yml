@@ -2,7 +2,7 @@ name: SNAPY Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, prod ]
 
 env:
   APP_NAME: messi-of-coding
