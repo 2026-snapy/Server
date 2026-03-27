@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -24,9 +24,15 @@ public class S3Service {
     @Value("${snapy.cloudfront.url}")
     private String cloudfrontDomain;
 
+    private static final Map<String, String> CONTENT_TYPE_TO_EXTENSION = Map.of(
+            "image/jpeg", "jpg",
+            "image/png", "png",
+            "image/webp", "webp"
+    );
+
     public S3UploadResult upload(MultipartFile file, Long userId) {
         validateImageFile(file);
-        String s3Key = generateS3Key(userId, file.getOriginalFilename());
+        String s3Key = generateS3Key(userId, file.getContentType());
 
         try {
             s3Uploader.upload(s3Key, file.getInputStream(), file.getContentType(), file.getSize());
@@ -45,10 +51,10 @@ public class S3Service {
         log.info("S3 삭제 완료 - key: {}", s3Key);
     }
 
-    private String generateS3Key(Long userId, String OriginalFileName) {
+    private String generateS3Key(Long userId, String contentType) {
         String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         String uuid = UUID.randomUUID().toString();
-        String extension = getExtension(OriginalFileName);
+        String extension = CONTENT_TYPE_TO_EXTENSION.getOrDefault(contentType, "jpg");
 
         return String.format("photos/%s/%s/%s.%s", userId, date, uuid, extension);
     }
@@ -67,13 +73,6 @@ public class S3Service {
         if (file.getSize() > MAX_SIZE) {
             throw new CustomException(ErrorCode.IMAGE_SIZE_EXCEEDED);
         }
-    }
-
-    private String getExtension(String fileName) {
-        return Optional.ofNullable(fileName)
-                .filter(f -> f.contains("."))
-                .map(f -> f.substring(fileName.lastIndexOf(".") + 1))
-                .orElse("jpg");
     }
 
     public record S3UploadResult(String s3Key, String imageUrl) {}
