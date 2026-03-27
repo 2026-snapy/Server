@@ -30,7 +30,7 @@ public enum ErrorCode {
 
     // Image
     IMAGE_EMPTY(HttpStatus.BAD_REQUEST, "이미지가 비어있습니다."),
-    INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "지원하지않는 파일 형식입니다."),
+    INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
     IMAGE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "이미지 크기가 10MB를 초과합니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
     IMAGE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다."),
