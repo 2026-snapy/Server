@@ -60,7 +60,7 @@ public class S3Service {
     }
 
     private void validateImageFile(MultipartFile file) {
-        if (file.isEmpty()) {
+        if (file == null || file.isEmpty()) {
             throw new CustomException(ErrorCode.IMAGE_EMPTY);
         }
 
