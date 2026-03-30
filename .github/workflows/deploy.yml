@@ -71,8 +71,9 @@ jobs:
               --spring.datasource.username="${{ secrets.DB_USERNAME }}" \
               --spring.datasource.password="${{ secrets.DB_PASSWORD }}" \
               --spring.cloud.aws.region.static=ap-northeast-2 \
+              --jwt.secret-key="${{ secrets.JWT_SECRET_KEY }}" \
               --snapy.s3.bucket="${{ secrets.S3_BUCKET }}" \
-              --snapy.cloudfront.domain="${{ secrets.CLOUDFRONT_DOMAIN }}" \
+              --snapy.cloudfront.url="${{ secrets.CLOUDFRONT_URL }}" \
               > ${{ env.APP_DIR }}/app.log 2>&1 &
 
             # PID 저장

@@ -3,7 +3,7 @@ server:
 
 spring:
   config:
-    import: application-secret.yml
+    import: optional:application-secret.yml
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
