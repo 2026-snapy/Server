@@ -5,6 +5,11 @@ spring:
   config:
     import: application-secret.yml
 
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
 
