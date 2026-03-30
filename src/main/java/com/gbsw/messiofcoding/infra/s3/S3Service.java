@@ -78,7 +78,7 @@ public class S3Service {
             throw new CustomException(ErrorCode.INVALID_IMAGE_TYPE);
         }
 
-        long MAX_SIZE = 10 * 1024 * 1024L;
+        long MAX_SIZE = 20 * 1024 * 1024L;
         if (file.getSize() > MAX_SIZE) {
             throw new CustomException(ErrorCode.IMAGE_SIZE_EXCEEDED);
         }
