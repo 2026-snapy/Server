@@ -45,7 +45,15 @@ public class DailyAlbum {
         this.photoCount = 0;
     }
 
+    private static final int MAX_SET_COUNT = 5;
+
     public void increasePhotoCount(int count) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("증가값은 양수여야 합니다.");
+        }
+        if (this.photoCount + count > MAX_SET_COUNT) {
+            throw new IllegalStateException("앨범 세트 개수를 초과했습니다. (최대 " + MAX_SET_COUNT + "세트)");
+        }
         this.photoCount += count;
     }
 }
