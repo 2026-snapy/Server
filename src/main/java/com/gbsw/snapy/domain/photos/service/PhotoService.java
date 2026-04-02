@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.photos.service;
 
 import com.gbsw.snapy.domain.photos.dto.response.PhotoUploadResponse;
 import com.gbsw.snapy.domain.photos.entity.Photo;
+import com.gbsw.snapy.domain.photos.entity.PhotoType;
 import com.gbsw.snapy.domain.photos.repository.PhotoRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
@@ -20,7 +21,7 @@ public class PhotoService {
     private final PhotoRepository photoRepository;
 
     @Transactional
-    public PhotoUploadResponse upload(MultipartFile file, Long userId) {
+    public PhotoUploadResponse upload(MultipartFile file, Long userId, PhotoType type) {
         S3Service.S3UploadResult result = s3Service.upload(file, userId);
 
         try {
@@ -28,6 +29,7 @@ public class PhotoService {
                     .userId(userId)
                     .s3Key(result.s3Key())
                     .imageUrl(result.imageUrl())
+                    .type(type)
                     .build();
 
             Photo saved = photoRepository.save(photo);

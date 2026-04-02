@@ -29,15 +29,20 @@ public class Photo {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false)
+    private PhotoType type;
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
     }
 
     @Builder
-    public Photo(Long userId, String s3Key, String imageUrl) {
+    public Photo(Long userId, String s3Key, String imageUrl, PhotoType type) {
         this.userId = userId;
         this.s3Key = s3Key;
         this.imageUrl = imageUrl;
+        this.type = type;
     }
 }
