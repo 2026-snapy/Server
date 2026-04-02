@@ -30,7 +30,7 @@ public class Photo {
     private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type")
+    @Column(name = "type", nullable = false)
     private PhotoType type;
 
     @PrePersist

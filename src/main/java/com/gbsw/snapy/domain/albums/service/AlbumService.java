@@ -44,8 +44,8 @@ public class AlbumService {
 
         album.increasePhotoCount(1);
 
-        PhotoUploadResponse frontPhoto = photoService.upload(request.getFrontImage(), userId);
-        PhotoUploadResponse backPhoto = photoService.upload(request.getBackImage(), userId);
+        PhotoUploadResponse frontPhoto = photoService.upload(request.getFrontImage(), userId, PhotoType.FRONT);
+        PhotoUploadResponse backPhoto = photoService.upload(request.getBackImage(), userId, PhotoType.BACK);
 
         albumPhotoRepository.save(
                 AlbumPhoto.builder()
