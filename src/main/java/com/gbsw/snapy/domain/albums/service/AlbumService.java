@@ -8,7 +8,9 @@ import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
 import com.gbsw.snapy.domain.albums.repository.AlbumPhotoRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
 import com.gbsw.snapy.domain.photos.dto.response.PhotoUploadResponse;
+import com.gbsw.snapy.domain.photos.entity.Photo;
 import com.gbsw.snapy.domain.photos.entity.PhotoType;
+import com.gbsw.snapy.domain.photos.repository.PhotoRepository;
 import com.gbsw.snapy.domain.photos.service.PhotoService;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
@@ -32,6 +34,7 @@ public class AlbumService {
     private final DailyAlbumRepository dailyAlbumRepository;
     private final AlbumPhotoRepository albumPhotoRepository;
     private final PhotoService photoService;
+    private final PhotoRepository photoRepository;
     private final S3Service s3Service;
 
     @Transactional
@@ -103,11 +106,34 @@ public class AlbumService {
         List<AlbumPhoto> albumPhotos = albumPhotoRepository.findByAlbumIdOrderByTypeAsc(album.getId());
         List<Long> photoIds = albumPhotos.stream().map(AlbumPhoto::getPhotoId).toList();
 
+        List<Photo> photos = photoIds.stream()
+                .map(id -> photoRepository.findById(id)
+                        .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND)))
+                .toList();
+
+        for (Photo photo : photos) {
+            if (!photo.getUserId().equals(userId)) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+        }
+
+        List<String> s3Keys = photos.stream().map(Photo::getS3Key).toList();
+
         albumPhotoRepository.deleteAll(albumPhotos);
+        photoRepository.deleteAll(photos);
         dailyAlbumRepository.delete(album);
 
-        for (Long photoId : photoIds) {
-            photoService.delete(photoId, userId);
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                for (String s3Key : s3Keys) {
+                    try {
+                        s3Service.delete(s3Key);
+                    } catch (Exception e) {
+                        log.warn("커밋 후 S3 삭제 실패 - key: {}", s3Key, e);
+                    }
+                }
+            }
+        });
     }
 }
