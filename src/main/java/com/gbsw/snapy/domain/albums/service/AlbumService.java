@@ -106,15 +106,15 @@ public class AlbumService {
         List<AlbumPhoto> albumPhotos = albumPhotoRepository.findByAlbumIdOrderByTypeAsc(album.getId());
         List<Long> photoIds = albumPhotos.stream().map(AlbumPhoto::getPhotoId).toList();
 
-        List<Photo> photos = photoIds.stream()
-                .map(id -> photoRepository.findById(id)
-                        .orElseThrow(() -> new CustomException(ErrorCode.IMAGE_NOT_FOUND)))
-                .toList();
+        List<Photo> photos = photoRepository.findAllById(photoIds);
+        if (photos.size() != photoIds.size()) {
+            throw new CustomException(ErrorCode.IMAGE_NOT_FOUND);
+        }
 
-        for (Photo photo : photos) {
-            if (!photo.getUserId().equals(userId)) {
-                throw new CustomException(ErrorCode.ACCESS_DENIED);
-            }
+        boolean hasUnauthorized = photos.stream()
+                .anyMatch(photo -> !photo.getUserId().equals(userId));
+        if (hasUnauthorized) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
         List<String> s3Keys = photos.stream().map(Photo::getS3Key).toList();
