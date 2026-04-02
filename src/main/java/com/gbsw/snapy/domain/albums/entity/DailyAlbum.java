@@ -1,4 +1,4 @@
-package com.gbsw.snapy.domain.photos.entity;
+package com.gbsw.snapy.domain.albums.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -6,13 +6,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name="photos")
+@Table(name = "daily_albums")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Photo {
+public class DailyAlbum {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -20,18 +22,14 @@ public class Photo {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "s3_key", nullable = false)
-    private String s3Key;
+    @Column(name = "album_date", nullable = false)
+    private LocalDate albumDate;
 
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    @Column(name = "photo_count", nullable = false)
+    private int photoCount;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "type")
-    private PhotoType type;
 
     @PrePersist
     protected void onCreate() {
@@ -39,10 +37,13 @@ public class Photo {
     }
 
     @Builder
-    public Photo(Long userId, String s3Key, String imageUrl, PhotoType type) {
+    public DailyAlbum(Long userId, LocalDate albumDate) {
         this.userId = userId;
-        this.s3Key = s3Key;
-        this.imageUrl = imageUrl;
-        this.type = type;
+        this.albumDate = albumDate;
+        this.photoCount = 0;
+    }
+
+    public void increasePhotoCount(int count) {
+        this.photoCount += count;
     }
 }

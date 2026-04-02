@@ -34,7 +34,19 @@ public enum ErrorCode {
     IMAGE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "이미지 크기가 10MB를 초과합니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
     IMAGE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다."),
-    IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다.");
+    IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다."),
+
+    // Album
+    ALBUM_NOT_FOUND(HttpStatus.NOT_FOUND, "앨범을 찾을 수 없습니다."),
+    ALBUM_PHOTO_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "앨범 사진 개수를 초과했습니다."),
+    DUPLICATE_ALBUM_PHOTO_TYPE(HttpStatus.CONFLICT, "해당 시간대에 이미 사진이 등록되어 있습니다."),
+
+    // Story
+    STORY_NOT_FOUND(HttpStatus.NOT_FOUND, "스토리를 찾을 수 없습니다."),
+    STORY_EXPIRED(HttpStatus.BAD_REQUEST, "만료된 스토리입니다."),
+
+    // Notification
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String message;

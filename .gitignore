@@ -6,6 +6,7 @@ build/
 !**/src/test/**/build/
 src/main/resources/application-secret.yml
 src/main/resources/application-deploy.yml
+src/main/java/com/gbsw/snapy/domain/photos/controller/TestController.java
 
 ### STS ###
 .apt_generated
@@ -37,3 +38,4 @@ out/
 
 ### VS Code ###
 .vscode/
+/CLAUDE.md
