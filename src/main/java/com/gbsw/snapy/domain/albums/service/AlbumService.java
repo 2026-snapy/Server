@@ -12,20 +12,27 @@ import com.gbsw.snapy.domain.photos.entity.PhotoType;
 import com.gbsw.snapy.domain.photos.service.PhotoService;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
+import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AlbumService {
 
     private final DailyAlbumRepository dailyAlbumRepository;
     private final AlbumPhotoRepository albumPhotoRepository;
     private final PhotoService photoService;
+    private final S3Service s3Service;
 
     @Transactional
     public AlbumUploadResponse upload(AlbumUploadRequest request, Long userId) {
@@ -46,6 +53,22 @@ public class AlbumService {
 
         PhotoUploadResponse frontPhoto = photoService.upload(request.getFrontImage(), userId, PhotoType.FRONT);
         PhotoUploadResponse backPhoto = photoService.upload(request.getBackImage(), userId, PhotoType.BACK);
+
+        List<String> uploadedS3Keys = List.of(frontPhoto.s3Key(), backPhoto.s3Key());
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == TransactionSynchronization.STATUS_ROLLED_BACK) {
+                    for (String s3Key : uploadedS3Keys) {
+                        try {
+                            s3Service.delete(s3Key);
+                        } catch (Exception e) {
+                            log.warn("트랜잭션 롤백 후 S3 정리 실패 - key: {}", s3Key, e);
+                        }
+                    }
+                }
+            }
+        });
 
         albumPhotoRepository.save(
                 AlbumPhoto.builder()
