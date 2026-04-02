@@ -10,7 +10,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "daily_albums")
+@Table(name = "daily_albums", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "album_date"})
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class DailyAlbum {
