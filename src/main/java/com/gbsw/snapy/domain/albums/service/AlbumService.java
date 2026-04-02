@@ -8,6 +8,7 @@ import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
 import com.gbsw.snapy.domain.albums.repository.AlbumPhotoRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
 import com.gbsw.snapy.domain.photos.dto.response.PhotoUploadResponse;
+import com.gbsw.snapy.domain.photos.entity.PhotoType;
 import com.gbsw.snapy.domain.photos.service.PhotoService;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
@@ -49,6 +50,7 @@ public class AlbumService {
                         .albumId(album.getId())
                         .photoId(frontPhoto.photoId())
                         .type(request.getType())
+                        .side(PhotoType.FRONT)
                         .build()
         );
 
@@ -57,6 +59,7 @@ public class AlbumService {
                         .albumId(album.getId())
                         .photoId(backPhoto.photoId())
                         .type(request.getType())
+                        .side(PhotoType.BACK)
                         .build()
         );
 
