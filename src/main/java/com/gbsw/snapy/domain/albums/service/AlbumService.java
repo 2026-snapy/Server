@@ -29,9 +29,6 @@ public class AlbumService {
 
     @Transactional
     public AlbumUploadResponse upload(AlbumUploadRequest request, Long userId) {
-        PhotoUploadResponse frontPhoto = photoService.upload(request.getFrontImage(), userId);
-        PhotoUploadResponse backPhoto = photoService.upload(request.getBackImage(), userId);
-
         LocalDate today = LocalDate.now();
         DailyAlbum album = dailyAlbumRepository.findByUserIdAndAlbumDate(userId, today)
                 .orElseGet(() -> dailyAlbumRepository.save(
@@ -44,6 +41,11 @@ public class AlbumService {
         if (albumPhotoRepository.existsByAlbumIdAndType(album.getId(), request.getType())) {
             throw new CustomException(ErrorCode.DUPLICATE_ALBUM_PHOTO_TYPE);
         }
+
+        album.increasePhotoCount(1);
+
+        PhotoUploadResponse frontPhoto = photoService.upload(request.getFrontImage(), userId);
+        PhotoUploadResponse backPhoto = photoService.upload(request.getBackImage(), userId);
 
         albumPhotoRepository.save(
                 AlbumPhoto.builder()
@@ -62,8 +64,6 @@ public class AlbumService {
                         .side(PhotoType.BACK)
                         .build()
         );
-
-        album.increasePhotoCount(1);
 
         return AlbumUploadResponse.from(album, request.getType());
     }
