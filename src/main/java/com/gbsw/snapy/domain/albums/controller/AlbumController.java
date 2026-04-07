@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.albums.controller;
 
 import com.gbsw.snapy.domain.albums.dto.request.AlbumUploadRequest;
+import com.gbsw.snapy.domain.albums.dto.response.AlbumTodayResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumUploadResponse;
 import com.gbsw.snapy.domain.albums.service.AlbumService;
 import com.gbsw.snapy.global.common.ApiResponse;
@@ -24,6 +25,14 @@ public class AlbumController {
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         AlbumUploadResponse response = albumService.upload(request, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/today")
+    public ResponseEntity<ApiResponse<AlbumTodayResponse>> getToday(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        AlbumTodayResponse response = albumService.getTodayAlbum(principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
