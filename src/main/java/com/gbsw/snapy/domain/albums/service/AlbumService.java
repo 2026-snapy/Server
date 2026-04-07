@@ -42,10 +42,11 @@ public class AlbumService {
     private final PhotoService photoService;
     private final PhotoRepository photoRepository;
     private final S3Service s3Service;
+    private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
     @Transactional
     public AlbumUploadResponse upload(AlbumUploadRequest request, Long userId) {
-        ZonedDateTime nowKst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        ZonedDateTime nowKst = ZonedDateTime.now(KST_ZONE);
         if (!request.getType().matches(nowKst.getHour())) {
             throw new CustomException(ErrorCode.INVALID_ALBUM_PHOTO_TIME_SLOT);
         }
@@ -107,7 +108,7 @@ public class AlbumService {
 
     @Transactional(readOnly = true)
     public AlbumTodayResponse getTodayAlbum(Long userId) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(KST_ZONE);
         DailyAlbum album = dailyAlbumRepository.findByUserIdAndAlbumDate(userId, today)
                 .orElse(null);
         if (album == null) {
