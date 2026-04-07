@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.albums.service;
 
 import com.gbsw.snapy.domain.albums.dto.request.AlbumUploadRequest;
+import com.gbsw.snapy.domain.albums.dto.response.AlbumTodayResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumUploadResponse;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhoto;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
@@ -24,7 +25,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -92,6 +96,54 @@ public class AlbumService {
         );
 
         return AlbumUploadResponse.from(album, request.getType());
+    }
+
+    @Transactional(readOnly = true)
+    public AlbumTodayResponse getTodayAlbum(Long userId) {
+        LocalDate today = LocalDate.now();
+        DailyAlbum album = dailyAlbumRepository.findByUserIdAndAlbumDate(userId, today)
+                .orElse(null);
+        if (album == null) {
+            return null;
+        }
+
+        List<AlbumPhoto> albumPhotos = albumPhotoRepository.findByAlbumIdOrderByTypeAsc(album.getId());
+        if (albumPhotos.isEmpty()) {
+            return AlbumTodayResponse.of(album, List.of());
+        }
+
+        List<Long> photoIds = albumPhotos.stream().map(AlbumPhoto::getPhotoId).toList();
+        Map<Long, Photo> photoById = new HashMap<>();
+        for (Photo photo : photoRepository.findAllById(photoIds)) {
+            photoById.put(photo.getId(), photo);
+        }
+        if (photoById.size() != photoIds.size()) {
+            throw new CustomException(ErrorCode.IMAGE_NOT_FOUND);
+        }
+
+        Map<AlbumPhotoType, String> frontUrls = new EnumMap<>(AlbumPhotoType.class);
+        Map<AlbumPhotoType, String> backUrls = new EnumMap<>(AlbumPhotoType.class);
+        for (AlbumPhoto ap : albumPhotos) {
+            Photo photo = photoById.get(ap.getPhotoId());
+            if (ap.getSide() == PhotoType.FRONT) {
+                frontUrls.put(ap.getType(), photo.getImageUrl());
+            } else {
+                backUrls.put(ap.getType(), photo.getImageUrl());
+            }
+        }
+
+        List<AlbumTodayResponse.AlbumPhotoSet> sets = new ArrayList<>();
+        for (AlbumPhotoType type : AlbumPhotoType.values()) {
+            if (frontUrls.containsKey(type) || backUrls.containsKey(type)) {
+                sets.add(new AlbumTodayResponse.AlbumPhotoSet(
+                        type,
+                        frontUrls.get(type),
+                        backUrls.get(type)
+                ));
+            }
+        }
+
+        return AlbumTodayResponse.of(album, sets);
     }
 
     @Transactional
