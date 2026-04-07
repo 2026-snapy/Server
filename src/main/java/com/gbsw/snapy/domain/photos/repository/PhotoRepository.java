@@ -1,0 +1,7 @@
+package com.gbsw.snapy.domain.photos.repository;
+
+import com.gbsw.snapy.domain.photos.entity.Photo;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface PhotoRepository extends JpaRepository<Photo, Long> {
+}
