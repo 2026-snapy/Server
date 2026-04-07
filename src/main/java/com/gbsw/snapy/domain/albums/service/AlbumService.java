@@ -24,6 +24,8 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -43,7 +45,12 @@ public class AlbumService {
 
     @Transactional
     public AlbumUploadResponse upload(AlbumUploadRequest request, Long userId) {
-        LocalDate today = LocalDate.now();
+        ZonedDateTime nowKst = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        if (!request.getType().matches(nowKst.getHour())) {
+            throw new CustomException(ErrorCode.INVALID_ALBUM_PHOTO_TIME_SLOT);
+        }
+
+        LocalDate today = nowKst.toLocalDate();
         DailyAlbum album = dailyAlbumRepository.findByUserIdAndAlbumDate(userId, today)
                 .orElseGet(() -> dailyAlbumRepository.save(
                         DailyAlbum.builder()
