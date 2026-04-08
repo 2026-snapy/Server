@@ -41,6 +41,7 @@ public enum ErrorCode {
     ALBUM_PHOTO_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "앨범 사진 개수를 초과했습니다."),
     DUPLICATE_ALBUM_PHOTO_TYPE(HttpStatus.CONFLICT, "해당 시간대에 이미 사진이 등록되어 있습니다."),
     INVALID_ALBUM_PHOTO_TIME_SLOT(HttpStatus.BAD_REQUEST, "현재 시간대에 업로드할 수 없는 사진 타입입니다."),
+    INVALID_MONTH(HttpStatus.BAD_REQUEST, "유효하지 않은 월입니다. (1~12)"),
 
     // Story
     STORY_NOT_FOUND(HttpStatus.NOT_FOUND, "스토리를 찾을 수 없습니다."),
