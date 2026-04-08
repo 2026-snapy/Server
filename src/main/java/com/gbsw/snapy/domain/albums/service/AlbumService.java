@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.albums.service;
 
 import com.gbsw.snapy.domain.albums.dto.request.AlbumUploadRequest;
+import com.gbsw.snapy.domain.albums.dto.response.AlbumDetailResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumListResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumTodayResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumUploadResponse;
@@ -117,9 +118,33 @@ public class AlbumService {
             return null;
         }
 
-        List<AlbumPhoto> albumPhotos = albumPhotoRepository.findByAlbumIdOrderByTypeAsc(album.getId());
+        List<PhotoSetView> sets = loadPhotoSets(album.getId());
+        List<AlbumTodayResponse.AlbumPhotoSet> mapped = sets.stream()
+                .map(s -> new AlbumTodayResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl()))
+                .toList();
+        return AlbumTodayResponse.of(album, mapped);
+    }
+
+    @Transactional(readOnly = true)
+    public AlbumDetailResponse getAlbumDetail(Long albumId, Long userId) {
+        DailyAlbum album = dailyAlbumRepository.findById(albumId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+
+        if (!album.getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        List<PhotoSetView> sets = loadPhotoSets(album.getId());
+        List<AlbumDetailResponse.AlbumPhotoSet> mapped = sets.stream()
+                .map(s -> new AlbumDetailResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl()))
+                .toList();
+        return AlbumDetailResponse.of(album, mapped);
+    }
+
+    private List<PhotoSetView> loadPhotoSets(Long albumId) {
+        List<AlbumPhoto> albumPhotos = albumPhotoRepository.findByAlbumIdOrderByTypeAsc(albumId);
         if (albumPhotos.isEmpty()) {
-            return AlbumTodayResponse.of(album, List.of());
+            return List.of();
         }
 
         List<Long> photoIds = albumPhotos.stream().map(AlbumPhoto::getPhotoId).toList();
@@ -142,18 +167,16 @@ public class AlbumService {
             }
         }
 
-        List<AlbumTodayResponse.AlbumPhotoSet> sets = new ArrayList<>();
+        List<PhotoSetView> sets = new ArrayList<>();
         for (AlbumPhotoType type : AlbumPhotoType.values()) {
             if (frontUrls.containsKey(type) || backUrls.containsKey(type)) {
-                sets.add(new AlbumTodayResponse.AlbumPhotoSet(
-                        type,
-                        frontUrls.get(type),
-                        backUrls.get(type)
-                ));
+                sets.add(new PhotoSetView(type, frontUrls.get(type), backUrls.get(type)));
             }
         }
+        return sets;
+    }
 
-        return AlbumTodayResponse.of(album, sets);
+    private record PhotoSetView(AlbumPhotoType type, String frontImageUrl, String backImageUrl) {
     }
 
     @Transactional(readOnly = true)
