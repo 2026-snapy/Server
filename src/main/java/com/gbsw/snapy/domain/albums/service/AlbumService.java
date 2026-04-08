@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.albums.service;
 
 import com.gbsw.snapy.domain.albums.dto.request.AlbumUploadRequest;
+import com.gbsw.snapy.domain.albums.dto.response.AlbumListResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumTodayResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumUploadResponse;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhoto;
@@ -24,6 +25,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -152,6 +154,61 @@ public class AlbumService {
         }
 
         return AlbumTodayResponse.of(album, sets);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AlbumListResponse> getAlbumsByMonth(Long userId, int month) {
+        if (month < 1 || month > 12) {
+            throw new CustomException(ErrorCode.INVALID_MONTH);
+        }
+
+        int year = ZonedDateTime.now(KST_ZONE).getYear();
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate start = yearMonth.atDay(1);
+        LocalDate end = yearMonth.atEndOfMonth();
+
+        List<DailyAlbum> albums = dailyAlbumRepository
+                .findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(userId, start, end);
+        if (albums.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> albumIds = albums.stream().map(DailyAlbum::getId).toList();
+        List<AlbumPhoto> frontPhotos = albumPhotoRepository
+                .findByAlbumIdInAndSide(albumIds, PhotoType.FRONT);
+
+        Map<Long, AlbumPhoto> thumbnailByAlbumId = new HashMap<>();
+        for (AlbumPhoto ap : frontPhotos) {
+            AlbumPhoto current = thumbnailByAlbumId.get(ap.getAlbumId());
+            if (current == null || ap.getType().ordinal() < current.getType().ordinal()) {
+                thumbnailByAlbumId.put(ap.getAlbumId(), ap);
+            }
+        }
+
+        List<Long> photoIds = thumbnailByAlbumId.values().stream()
+                .map(AlbumPhoto::getPhotoId)
+                .toList();
+        Map<Long, Photo> photoById = new HashMap<>();
+        if (!photoIds.isEmpty()) {
+            for (Photo photo : photoRepository.findAllById(photoIds)) {
+                photoById.put(photo.getId(), photo);
+            }
+            if (photoById.size() != photoIds.size()) {
+                throw new CustomException(ErrorCode.IMAGE_NOT_FOUND);
+            }
+        }
+
+        List<AlbumListResponse> result = new ArrayList<>(albums.size());
+        for (DailyAlbum album : albums) {
+            AlbumPhoto thumbnail = thumbnailByAlbumId.get(album.getId());
+            String thumbnailUrl = null;
+            if (thumbnail != null) {
+                Photo photo = photoById.get(thumbnail.getPhotoId());
+                thumbnailUrl = photo.getImageUrl();
+            }
+            result.add(AlbumListResponse.of(album, thumbnailUrl));
+        }
+        return result;
     }
 
     @Transactional

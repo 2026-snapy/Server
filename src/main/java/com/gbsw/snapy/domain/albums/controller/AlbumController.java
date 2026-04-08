@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.albums.controller;
 
 import com.gbsw.snapy.domain.albums.dto.request.AlbumUploadRequest;
+import com.gbsw.snapy.domain.albums.dto.response.AlbumListResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumTodayResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumUploadResponse;
 import com.gbsw.snapy.domain.albums.service.AlbumService;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,6 +28,15 @@ public class AlbumController {
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         AlbumUploadResponse response = albumService.upload(request, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<AlbumListResponse>>> getAlbumsByMonth(
+            @RequestParam int month,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        List<AlbumListResponse> response = albumService.getAlbumsByMonth(principal.getId(), month);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
