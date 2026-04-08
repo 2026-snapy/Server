@@ -23,8 +23,8 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
 
 jwt:
-  access-token-expiration: 1800000    # 30분 (ms)
-  refresh-token-expiration: 604800000 # 7일 (ms)
+  access-token-expiration: 1800000
+  refresh-token-expiration: 604800000
 
 springdoc:
   api-docs:
