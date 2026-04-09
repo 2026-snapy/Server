@@ -3,10 +3,12 @@ package com.gbsw.snapy.domain.albums.service;
 import com.gbsw.snapy.domain.albums.dto.request.AlbumUploadRequest;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumDetailResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumListResponse;
+import com.gbsw.snapy.domain.albums.dto.response.AlbumPublishResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumTodayResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumUploadResponse;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhoto;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
+import com.gbsw.snapy.domain.albums.entity.AlbumStatus;
 import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
 import com.gbsw.snapy.domain.albums.repository.AlbumPhotoRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
@@ -232,6 +234,20 @@ public class AlbumService {
             result.add(AlbumListResponse.of(album, thumbnailUrl));
         }
         return result;
+    }
+
+    @Transactional
+    public AlbumPublishResponse publishAlbum(Long albumId, Long userId) {
+        DailyAlbum album = dailyAlbumRepository.findByIdForUpdate(albumId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+
+        if (!album.getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        album.publish();
+
+        return AlbumPublishResponse.from(album);
     }
 
     @Transactional

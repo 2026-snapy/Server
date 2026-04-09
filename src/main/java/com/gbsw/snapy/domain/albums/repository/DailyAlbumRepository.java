@@ -1,7 +1,11 @@
 package com.gbsw.snapy.domain.albums.repository;
 
 import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -15,4 +19,8 @@ public interface DailyAlbumRepository extends JpaRepository<DailyAlbum, Long> {
 
     List<DailyAlbum> findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(
             Long userId, LocalDate start, LocalDate end);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from DailyAlbum a where a.id = :id")
+    Optional<DailyAlbum> findByIdForUpdate(@Param("id") Long id);
 }
