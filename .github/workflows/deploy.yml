@@ -4,6 +4,10 @@ on:
   push:
     branches: [ prod ]
 
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: true
+
 env:
   IMAGE_NAME: ghcr.io/2026-messi-of-coding/server
   REMOTE_APP_DIR: /home/ec2-user/snapy-app
