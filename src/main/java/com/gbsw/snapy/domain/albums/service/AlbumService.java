@@ -132,7 +132,7 @@ public class AlbumService {
         DailyAlbum album = dailyAlbumRepository.findById(albumId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
 
-        if (!album.getUserId().equals(userId)) {
+        if (!album.getUserId().equals(userId) && album.getStatus() != AlbumStatus.PUBLISHED) {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
