@@ -9,7 +9,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE_NAME: ghcr.io/2026-messi-of-coding/server
   REMOTE_APP_DIR: /home/ec2-user/snapy-app
 
 jobs:
@@ -20,6 +19,7 @@ jobs:
       packages: write
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
+      image_name: ${{ steps.meta.outputs.image_name }}
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
@@ -34,10 +34,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 이미지 태그 준비
+      - name: 이미지 이름/태그 준비
         id: meta
         run: |
+          IMAGE_NAME=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          echo "image_name=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
           echo "image_tag=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
       - name: Docker 이미지 빌드 & 푸시
@@ -46,8 +48,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.image_tag }}
+            ${{ steps.meta.outputs.image_name }}:latest
+            ${{ steps.meta.outputs.image_name }}:${{ steps.meta.outputs.image_tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -80,12 +82,13 @@ jobs:
           JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
           CLOUDFRONT_URL: ${{ secrets.CLOUDFRONT_URL }}
+          IMAGE_NAME: ${{ needs.build-and-push.outputs.image_name }}
           IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           password: ${{ secrets.EC2_PASSWORD }}
-          envs: GHCR_USER,GHCR_TOKEN,DB_USERNAME,DB_PASSWORD,JWT_SECRET_KEY,S3_BUCKET,CLOUDFRONT_URL,IMAGE_TAG
+          envs: GHCR_USER,GHCR_TOKEN,DB_USERNAME,DB_PASSWORD,JWT_SECRET_KEY,S3_BUCKET,CLOUDFRONT_URL,IMAGE_NAME,IMAGE_TAG
           script: |
             set -e
             cd ${{ env.REMOTE_APP_DIR }}
@@ -93,7 +96,7 @@ jobs:
             # .env 파일 생성 (권한 600)
             umask 077
             cat > .env <<EOF
-            APP_IMAGE=${{ env.IMAGE_NAME }}:${IMAGE_TAG}
+            APP_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}
             SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
             SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
             JWT_SECRET_KEY=${JWT_SECRET_KEY}
