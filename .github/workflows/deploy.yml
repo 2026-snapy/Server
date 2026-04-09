@@ -50,6 +50,9 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4

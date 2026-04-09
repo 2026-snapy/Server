@@ -23,7 +23,7 @@ ENV TZ=Asia/Seoul \
 RUN groupadd --system spring && useradd --system --gid spring spring
 
 WORKDIR /app
-COPY --from=build /workspace/build/libs/*.jar app.jar
+COPY --from=build /workspace/build/libs/messi-of-coding-0.0.1-SNAPSHOT.jar app.jar
 RUN chown -R spring:spring /app
 USER spring
 
