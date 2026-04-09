@@ -1,0 +1,27 @@
+.git
+.gitignore
+.github
+
+# Build outputs
+build
+out
+.gradle
+
+# IDE
+.idea
+.vscode
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets (이미지에 포함되면 안 됨)
+**/application-secret.yml
+.env
+.env.*
+
+# Docs
+*.md
