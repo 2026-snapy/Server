@@ -8,6 +8,7 @@ import com.gbsw.snapy.domain.albums.dto.response.AlbumTodayResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumUploadResponse;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhoto;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
+import com.gbsw.snapy.domain.albums.entity.AlbumStatus;
 import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
 import com.gbsw.snapy.domain.albums.repository.AlbumPhotoRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
@@ -237,7 +238,7 @@ public class AlbumService {
 
     @Transactional
     public AlbumPublishResponse publishAlbum(Long albumId, Long userId) {
-        DailyAlbum album = dailyAlbumRepository.findById(albumId)
+        DailyAlbum album = dailyAlbumRepository.findByIdForUpdate(albumId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
 
         if (!album.getUserId().equals(userId)) {

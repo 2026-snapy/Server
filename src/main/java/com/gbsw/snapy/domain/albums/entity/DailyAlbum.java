@@ -7,6 +7,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,6 +38,7 @@ public class DailyAlbum {
     private int photoCount;
 
     @Enumerated(EnumType.STRING)
+    @ColumnDefault("'DRAFT'")
     @Column(name = "status", nullable = false, length = 16)
     private AlbumStatus status;
 
