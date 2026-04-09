@@ -1,0 +1,21 @@
+services:
+  app:
+    image: ${APP_IMAGE:-ghcr.io/2026-messi-of-coding/server:latest}
+    container_name: snapy-app
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Seoul
+      SPRING_PROFILES_ACTIVE: deploy
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/snapy?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      SPRING_CLOUD_AWS_REGION_STATIC: ap-northeast-2
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
