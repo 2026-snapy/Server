@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.users.controller;
 
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
+import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
 import com.gbsw.snapy.domain.users.service.UserService;
 import com.gbsw.snapy.global.common.ApiResponse;
@@ -32,6 +33,15 @@ public class UserController {
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         UpdateBackgroundImageResponse response = userService.updateBackgroundImage(principal.getId(), image);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/me/profile-image")
+    public ResponseEntity<ApiResponse<UpdateProfileImageResponse>> updateProfileImage(
+            @RequestParam MultipartFile image,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        UpdateProfileImageResponse response = userService.updateProfileImage(principal.getId(), image);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

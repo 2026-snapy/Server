@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.users.service;
 
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
+import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
 import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
@@ -53,5 +54,31 @@ public class UserService {
         userRepository.save(user);
 
         return UpdateBackgroundImageResponse.from(user);
+    }
+
+    public UpdateProfileImageResponse updateProfileImage(Long userId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new CustomException(ErrorCode.IMAGE_EMPTY);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        String oldKey = user.getProfileImageKey();
+
+        S3Service.S3UploadResult result = s3Service.upload(file, userId);
+
+        try {
+            user.setProfileImageUrl(result.imageUrl());
+            user.setProfileImageKey(result.s3Key());
+        } catch (Exception e) {
+            s3Service.delete(result.s3Key());
+            throw e;
+        }
+
+        if (oldKey != null) s3Service.delete(oldKey);
+        userRepository.save(user);
+
+        return UpdateProfileImageResponse.from(user);
     }
 }
