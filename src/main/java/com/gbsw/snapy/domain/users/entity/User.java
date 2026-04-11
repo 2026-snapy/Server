@@ -36,6 +36,18 @@ public class User {
     @Column(nullable = false)
     private String password;
 
+    @Column(name = "background_image_url")
+    private String backGroundImageUrl;
+
+    @Column(name = "background_image_key")
+    private String backGroundImageKey;
+
+    @Column(name = "profile_image_url")
+    private String profileImageUrl;
+
+    @Column(name = "profile_image_key")
+    private String profileImageKey;
+
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<RefreshToken> refreshTokens = new ArrayList<>();
