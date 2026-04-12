@@ -6,6 +6,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MultipartException;
 
 @Slf4j
 @RestControllerAdvice
@@ -42,6 +43,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.INVALID_INPUT_VALUE.getStatus())
                 .body(ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, message));
+    }
+
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ErrorResponse> handleMultipartException(MultipartException e) {
+        log.warn("MultipartException: {}", e.getMessage());
+        return ResponseEntity
+                .status(ErrorCode.IMAGE_EMPTY.getStatus())
+                .body(ErrorResponse.of(ErrorCode.IMAGE_EMPTY));
     }
 
     @ExceptionHandler(Exception.class)
