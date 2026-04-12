@@ -3,6 +3,7 @@ package com.gbsw.snapy.domain.users.controller;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
+import com.gbsw.snapy.domain.users.dto.response.UserSearchResponse;
 import com.gbsw.snapy.domain.users.service.UserService;
 import com.gbsw.snapy.global.common.ApiResponse;
 import com.gbsw.snapy.global.security.CustomUserPrincipal;
@@ -12,12 +13,22 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<UserSearchResponse>>> searchUsers(
+            @RequestParam String q
+    ) {
+        List<UserSearchResponse> response = userService.searchUsers(q);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getMyProfile(

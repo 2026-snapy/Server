@@ -3,6 +3,7 @@ package com.gbsw.snapy.domain.users.service;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
+import com.gbsw.snapy.domain.users.dto.response.UserSearchResponse;
 import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
@@ -11,6 +12,9 @@ import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -80,5 +84,16 @@ public class UserService {
         userRepository.save(user);
 
         return UpdateProfileImageResponse.from(user);
+    }
+
+    public List<UserSearchResponse> searchUsers(String q) {
+        List<User> users = userRepository.findByHandleContainingIgnoreCaseOrUsernameContainingIgnoreCase(q, q);
+
+        List<UserSearchResponse> result = new ArrayList<>();
+        for (User user : users) {
+            result.add(UserSearchResponse.from(user));
+        }
+
+        return result;
     }
 }
