@@ -42,6 +42,7 @@ public class S3Service {
         try (InputStream inputStream = file.getInputStream()) {
             s3Uploader.upload(s3Key, inputStream, file.getContentType(), file.getSize());
         } catch (Exception e) {
+            log.error("S3 업로드 실패 - key: {}, cause: {}", s3Key, e.getMessage(), e);
             throw new CustomException(ErrorCode.IMAGE_UPLOAD_FAILED);
         }
 
