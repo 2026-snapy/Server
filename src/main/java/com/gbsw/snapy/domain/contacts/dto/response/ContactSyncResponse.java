@@ -9,10 +9,11 @@ public record ContactSyncResponse(
 ) {
     public record ContactUserResponse(
             String handle,
+            String username,
             String profileImageUrl
     ) {
         public static ContactUserResponse from(User user) {
-            return new ContactUserResponse(user.getHandle(), user.getProfileImageUrl());
+            return new ContactUserResponse(user.getHandle(), user.getUsername(), user.getProfileImageUrl());
         }
     }
 }
