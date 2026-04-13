@@ -1,5 +1,7 @@
 package com.gbsw.snapy.domain.users.controller;
 
+import com.gbsw.snapy.domain.friends.dto.response.FriendResponse;
+import com.gbsw.snapy.domain.friends.service.FriendService;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
@@ -21,6 +23,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final FriendService friendService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserSearchResponse>>> searchUsers(
@@ -61,6 +64,23 @@ public class UserController {
             @PathVariable String handle
     ) {
         UserProfileResponse response = userService.getProfile(handle);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{handle}/friends")
+    public ResponseEntity<ApiResponse<List<FriendResponse>>> getFriends(
+            @PathVariable String handle
+    ) {
+        List<FriendResponse> response = friendService.getFriends(handle);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{handle}/mutual-friends")
+    public ResponseEntity<ApiResponse<List<FriendResponse>>> getMutualFriends(
+            @PathVariable String handle,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        List<FriendResponse> response = friendService.getMutualFriends(principal.getId(), handle);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
