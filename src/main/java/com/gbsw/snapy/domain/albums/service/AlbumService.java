@@ -19,6 +19,9 @@ import com.gbsw.snapy.domain.photos.repository.PhotoRepository;
 import com.gbsw.snapy.domain.photos.service.PhotoService;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
+import com.gbsw.snapy.domain.stories.entity.Story;
+import com.gbsw.snapy.domain.stories.repository.StoryRepository;
+import com.gbsw.snapy.domain.stories.service.StoryService;
 import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +50,8 @@ public class AlbumService {
     private final PhotoService photoService;
     private final PhotoRepository photoRepository;
     private final S3Service s3Service;
+    private final StoryService storyService;
+    private final StoryRepository storyRepository;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
     @Transactional
@@ -107,6 +112,10 @@ public class AlbumService {
                         .side(PhotoType.BACK)
                         .build()
         );
+
+        Story story = storyRepository.findByUserIdAndAlbumId(userId, album.getId())
+                .orElseGet(() -> storyService.createStory(userId, album.getId()));
+        storyService.addPhotos(story.getId(), frontPhoto.photoId(), backPhoto.photoId(), request.getType());
 
         return AlbumUploadResponse.from(album, request.getType());
     }
