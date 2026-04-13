@@ -252,6 +252,55 @@ public class AlbumService {
         return result;
     }
 
+    @Transactional(readOnly = true)
+    public List<AlbumListResponse> getCalendarThumbnails(Long userId) {
+        LocalDate today = LocalDate.now(KST_ZONE);
+        LocalDate fiveMonthsAgo = today.minusMonths(5).withDayOfMonth(1);
+
+        List<DailyAlbum> albums = dailyAlbumRepository
+                .findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(userId, fiveMonthsAgo, today);
+        if (albums.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> albumIds = albums.stream().map(DailyAlbum::getId).toList();
+        List<AlbumPhoto> frontPhotos = albumPhotoRepository
+                .findByAlbumIdInAndSide(albumIds, PhotoType.FRONT);
+
+        Map<Long, AlbumPhoto> thumbnailByAlbumId = new HashMap<>();
+        for (AlbumPhoto ap : frontPhotos) {
+            AlbumPhoto current = thumbnailByAlbumId.get(ap.getAlbumId());
+            if (current == null || ap.getType().ordinal() < current.getType().ordinal()) {
+                thumbnailByAlbumId.put(ap.getAlbumId(), ap);
+            }
+        }
+
+        List<Long> photoIds = thumbnailByAlbumId.values().stream()
+                .map(AlbumPhoto::getPhotoId)
+                .toList();
+        Map<Long, Photo> photoById = new HashMap<>();
+        if (!photoIds.isEmpty()) {
+            for (Photo photo : photoRepository.findAllById(photoIds)) {
+                photoById.put(photo.getId(), photo);
+            }
+            if (photoById.size() != photoIds.size()) {
+                throw new CustomException(ErrorCode.IMAGE_NOT_FOUND);
+            }
+        }
+
+        List<AlbumListResponse> result = new ArrayList<>(albums.size());
+        for (DailyAlbum album : albums) {
+            AlbumPhoto thumbnail = thumbnailByAlbumId.get(album.getId());
+            String thumbnailUrl = null;
+            if (thumbnail != null) {
+                Photo photo = photoById.get(thumbnail.getPhotoId());
+                thumbnailUrl = photo.getImageUrl();
+            }
+            result.add(AlbumListResponse.of(album, thumbnailUrl));
+        }
+        return result;
+    }
+
     @Transactional
     public AlbumPublishResponse publishAlbum(Long albumId, Long userId) {
         DailyAlbum album = dailyAlbumRepository.findByIdForUpdate(albumId)

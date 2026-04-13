@@ -42,6 +42,14 @@ public class AlbumController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @GetMapping("/calendar")
+    public ResponseEntity<ApiResponse<List<AlbumListResponse>>> getCalendarThumbnails(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        List<AlbumListResponse> response = albumService.getCalendarThumbnails(principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     @GetMapping("/today")
     public ResponseEntity<ApiResponse<AlbumTodayResponse>> getToday(
             @AuthenticationPrincipal CustomUserPrincipal principal
