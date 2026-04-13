@@ -2,9 +2,11 @@ package com.gbsw.snapy.domain.friend.service;
 
 import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse;
 import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse.Status;
+import com.gbsw.snapy.domain.friend.dto.response.ReceivedFriendRequestResponse;
 import com.gbsw.snapy.domain.friend.entity.FriendRequest;
 import com.gbsw.snapy.domain.friend.repository.FriendRepository;
 import com.gbsw.snapy.domain.friend.repository.FriendRequestRepository;
+import com.gbsw.snapy.domain.friend.repository.projection.ReceivedFriendRequestProjection;
 import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
@@ -12,6 +14,9 @@ import com.gbsw.snapy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +61,17 @@ public class FriendService {
         }
 
         return new FriendRequestStatusResponse(Status.NONE);
+    }
+
+    public List<ReceivedFriendRequestResponse> getReceivedRequests(Long userId) {
+        List<ReceivedFriendRequestProjection> projections = friendRequestRepository.findReceivedRequests(userId);
+
+        List<ReceivedFriendRequestResponse> result = new ArrayList<>();
+        for (ReceivedFriendRequestProjection p : projections) {
+            result.add(new ReceivedFriendRequestResponse(p.getRequestId(), p.getHandle(), p.getUsername(), p.getProfileImageUrl()));
+        }
+
+        return result;
     }
 
     @Transactional
