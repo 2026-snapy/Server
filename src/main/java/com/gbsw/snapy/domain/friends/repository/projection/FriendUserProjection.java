@@ -1,4 +1,4 @@
-package com.gbsw.snapy.domain.friend.repository.projection;
+package com.gbsw.snapy.domain.friends.repository.projection;
 
 public interface FriendUserProjection {
     String getHandle();

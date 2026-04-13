@@ -1,4 +1,4 @@
-package com.gbsw.snapy.domain.friend.dto.response;
+package com.gbsw.snapy.domain.friends.dto.response;
 
 public record FriendRequestStatusResponse(
         Status status

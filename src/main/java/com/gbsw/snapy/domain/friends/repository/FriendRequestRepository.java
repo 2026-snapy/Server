@@ -1,7 +1,7 @@
-package com.gbsw.snapy.domain.friend.repository;
+package com.gbsw.snapy.domain.friends.repository;
 
-import com.gbsw.snapy.domain.friend.entity.FriendRequest;
-import com.gbsw.snapy.domain.friend.repository.projection.ReceivedFriendRequestProjection;
+import com.gbsw.snapy.domain.friends.entity.FriendRequest;
+import com.gbsw.snapy.domain.friends.repository.projection.ReceivedFriendRequestProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

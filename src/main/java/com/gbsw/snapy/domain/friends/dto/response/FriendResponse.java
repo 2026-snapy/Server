@@ -1,6 +1,6 @@
-package com.gbsw.snapy.domain.friend.dto.response;
+package com.gbsw.snapy.domain.friends.dto.response;
 
-import com.gbsw.snapy.domain.friend.repository.projection.FriendUserProjection;
+import com.gbsw.snapy.domain.friends.repository.projection.FriendUserProjection;
 
 public record FriendResponse(
         String handle,

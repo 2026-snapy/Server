@@ -1,4 +1,4 @@
-package com.gbsw.snapy.domain.friend.dto.request;
+package com.gbsw.snapy.domain.friends.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 

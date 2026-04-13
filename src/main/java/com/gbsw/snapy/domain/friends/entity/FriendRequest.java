@@ -1,4 +1,4 @@
-package com.gbsw.snapy.domain.friend.entity;
+package com.gbsw.snapy.domain.friends.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

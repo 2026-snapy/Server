@@ -1,7 +1,7 @@
 package com.gbsw.snapy.domain.users.controller;
 
-import com.gbsw.snapy.domain.friend.dto.response.FriendResponse;
-import com.gbsw.snapy.domain.friend.service.FriendService;
+import com.gbsw.snapy.domain.friends.dto.response.FriendResponse;
+import com.gbsw.snapy.domain.friends.service.FriendService;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;

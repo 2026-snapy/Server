@@ -1,17 +1,17 @@
-package com.gbsw.snapy.domain.friend.service;
+package com.gbsw.snapy.domain.friends.service;
 
-import com.gbsw.snapy.domain.friend.dto.request.FriendRequestActionRequest.Action;
-import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse;
-import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse.Status;
-import com.gbsw.snapy.domain.friend.dto.response.FriendResponse;
-import com.gbsw.snapy.domain.friend.dto.response.ReceivedFriendRequestResponse;
-import com.gbsw.snapy.domain.friend.entity.Friend;
-import com.gbsw.snapy.domain.friend.entity.FriendId;
-import com.gbsw.snapy.domain.friend.entity.FriendRequest;
-import com.gbsw.snapy.domain.friend.repository.FriendRepository;
-import com.gbsw.snapy.domain.friend.repository.FriendRequestRepository;
-import com.gbsw.snapy.domain.friend.repository.projection.FriendUserProjection;
-import com.gbsw.snapy.domain.friend.repository.projection.ReceivedFriendRequestProjection;
+import com.gbsw.snapy.domain.friends.dto.request.FriendRequestActionRequest.Action;
+import com.gbsw.snapy.domain.friends.dto.response.FriendRequestStatusResponse;
+import com.gbsw.snapy.domain.friends.dto.response.FriendRequestStatusResponse.Status;
+import com.gbsw.snapy.domain.friends.dto.response.FriendResponse;
+import com.gbsw.snapy.domain.friends.dto.response.ReceivedFriendRequestResponse;
+import com.gbsw.snapy.domain.friends.entity.Friend;
+import com.gbsw.snapy.domain.friends.entity.FriendId;
+import com.gbsw.snapy.domain.friends.entity.FriendRequest;
+import com.gbsw.snapy.domain.friends.repository.FriendRepository;
+import com.gbsw.snapy.domain.friends.repository.FriendRequestRepository;
+import com.gbsw.snapy.domain.friends.repository.projection.FriendUserProjection;
+import com.gbsw.snapy.domain.friends.repository.projection.ReceivedFriendRequestProjection;
 import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
@@ -131,6 +131,18 @@ public class FriendService {
         }
 
         friendRequestRepository.delete(request);
+    }
+
+    @Transactional
+    public void deleteFriend(Long myId, String handle) {
+        User target = userRepository.findByHandle(handle)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (!friendRepository.existsFriendship(myId, target.getId())) {
+            throw new CustomException(ErrorCode.FRIEND_NOT_FOUND);
+        }
+
+        friendRepository.deleteFriendship(myId, target.getId());
     }
 
     @Transactional

@@ -1,6 +1,6 @@
-package com.gbsw.snapy.domain.friend.dto.response;
+package com.gbsw.snapy.domain.friends.dto.response;
 
-import com.gbsw.snapy.domain.friend.entity.FriendRequest;
+import com.gbsw.snapy.domain.friends.entity.FriendRequest;
 import com.gbsw.snapy.domain.users.entity.User;
 
 public record ReceivedFriendRequestResponse(

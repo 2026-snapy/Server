@@ -1,9 +1,9 @@
-package com.gbsw.snapy.domain.friend.controller;
+package com.gbsw.snapy.domain.friends.controller;
 
-import com.gbsw.snapy.domain.friend.dto.request.FriendRequestActionRequest;
-import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse;
-import com.gbsw.snapy.domain.friend.dto.response.ReceivedFriendRequestResponse;
-import com.gbsw.snapy.domain.friend.service.FriendService;
+import com.gbsw.snapy.domain.friends.dto.request.FriendRequestActionRequest;
+import com.gbsw.snapy.domain.friends.dto.response.FriendRequestStatusResponse;
+import com.gbsw.snapy.domain.friends.dto.response.ReceivedFriendRequestResponse;
+import com.gbsw.snapy.domain.friends.service.FriendService;
 import com.gbsw.snapy.global.common.ApiResponse;
 import jakarta.validation.Valid;
 import com.gbsw.snapy.global.security.CustomUserPrincipal;
