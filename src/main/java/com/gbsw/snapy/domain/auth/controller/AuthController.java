@@ -46,7 +46,7 @@ public class AuthController {
         cookie.setMaxAge((int) (jwtProperties.getRefreshTokenExpiration() / 1000));
         response.addCookie(cookie);
 
-        return ResponseEntity.ok(ApiResponse.success(new LoginResponse(result.accessToken())));
+        return ResponseEntity.ok(ApiResponse.success(new LoginResponse(result.accessToken(), result.refreshToken())));
     }
 
     @PostMapping("refresh-accesstoken")
