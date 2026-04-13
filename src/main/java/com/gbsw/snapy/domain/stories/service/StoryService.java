@@ -12,7 +12,6 @@ import com.gbsw.snapy.domain.stories.dto.response.StoryDetailResponse;
 import com.gbsw.snapy.domain.stories.dto.response.StoryListResponse;
 import com.gbsw.snapy.domain.stories.entity.Story;
 import com.gbsw.snapy.domain.stories.entity.StoryPhoto;
-import com.gbsw.snapy.domain.stories.entity.StoryStatus;
 import com.gbsw.snapy.domain.stories.repository.StoryPhotoRepository;
 import com.gbsw.snapy.domain.stories.repository.StoryRepository;
 import com.gbsw.snapy.domain.users.entity.User;
@@ -88,8 +87,7 @@ public class StoryService {
 
         LocalDateTime nowKst = LocalDateTime.now(KST_ZONE);
         List<Story> stories = storyRepository
-                .findByUserIdInAndStatusAndExpiresAtAfterOrderByCreatedAtDesc(
-                        friendIds, StoryStatus.ACTIVE, nowKst);
+                .findByUserIdInAndExpiresAtAfterOrderByCreatedAtDesc(friendIds, nowKst);
 
         if (stories.isEmpty()) {
             return List.of();
@@ -145,16 +143,13 @@ public class StoryService {
         return result;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public StoryDetailResponse getStoryDetail(Long storyId, Long userId) {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORY_NOT_FOUND));
 
         LocalDateTime nowKst = LocalDateTime.now(KST_ZONE);
-        if (story.getExpiresAt().isBefore(nowKst) && !story.isExpired()) {
-            story.expire();
-        }
-        if (story.isExpired()) {
+        if (story.isExpired(nowKst)) {
             throw new CustomException(ErrorCode.STORY_EXPIRED);
         }
 
