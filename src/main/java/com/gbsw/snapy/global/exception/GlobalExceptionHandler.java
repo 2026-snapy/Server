@@ -7,6 +7,7 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -61,6 +62,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(ErrorCode.IMAGE_EMPTY.getStatus())
                 .body(ErrorResponse.of(ErrorCode.IMAGE_EMPTY));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        log.warn("HttpMessageNotReadableException: {}", e.getMessage());
+        return ResponseEntity
+                .status(ErrorCode.INVALID_INPUT_VALUE.getStatus())
+                .body(ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, "올바르지 않은 값입니다."));
     }
 
     @ExceptionHandler(Exception.class)

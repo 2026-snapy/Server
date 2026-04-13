@@ -26,6 +26,9 @@ public class UserSettingService {
 
     @Transactional
     public void updateFeedVisibility(Long userId, UpdateFeedVisibilityRequest request) {
+        if (request.visibility() == null) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE, "visibility는 필수입니다. (PUBLIC, FRIENDS_ONLY)");
+        }
         if (request.visibility() == Visibility.ONLY_ME) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE, "피드는 PUBLIC, FRIENDS_ONLY만 설정할 수 있습니다.");
         }
@@ -36,6 +39,9 @@ public class UserSettingService {
 
     @Transactional
     public void updateAlbumVisibility(Long userId, UpdateAlbumVisibilityRequest request) {
+        if (request.visibility() == null) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE, "visibility는 필수입니다. (PUBLIC, FRIENDS_ONLY, ONLY_ME)");
+        }
         UserSetting setting = getOrCreate(userId);
         setting.setAlbumVisibility(request.visibility());
     }
