@@ -10,6 +10,7 @@ import com.gbsw.snapy.domain.auth.service.AuthService;
 import com.gbsw.snapy.global.security.jwt.JwtProperties;
 import com.gbsw.snapy.global.common.ApiResponse;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,9 +36,15 @@ public class AuthController {
     @PostMapping("login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
             @Valid @RequestBody LoginRequest dto,
+            HttpServletRequest request,
             HttpServletResponse response
     ) {
         LoginServiceResult result = authService.login(dto);
+        boolean isApp = "app".equals(request.getHeader("X-Client-Type"));
+
+        if (isApp) {
+            return ResponseEntity.ok(ApiResponse.success(new LoginResponse(result.accessToken(), result.refreshToken())));
+        }
 
         Cookie cookie = new Cookie("refreshToken", result.refreshToken());
         cookie.setHttpOnly(true);
@@ -46,31 +53,38 @@ public class AuthController {
         cookie.setMaxAge((int) (jwtProperties.getRefreshTokenExpiration() / 1000));
         response.addCookie(cookie);
 
-        return ResponseEntity.ok(ApiResponse.success(new LoginResponse(result.accessToken(), result.refreshToken())));
+        return ResponseEntity.ok(ApiResponse.success(new LoginResponse(result.accessToken(), null)));
     }
 
     @PostMapping("refresh-accesstoken")
     public ResponseEntity<ApiResponse<RefreshAccessTokenResponse>> refreshAccessToken(
-            @CookieValue(name = "refreshToken", required = false) String refreshToken
+            @RequestHeader(value = "X-Client-Type", required = false) String clientType,
+            @RequestHeader(value = "X-Refresh-Token", required = false) String appRefreshToken,
+            @CookieValue(name = "refreshToken", required = false) String cookieRefreshToken
     ) {
+        String refreshToken = "app".equals(clientType) ? appRefreshToken : cookieRefreshToken;
         RefreshAccessTokenResponse rs = authService.refreshAcessToken(refreshToken);
         return ResponseEntity.ok(ApiResponse.success(rs));
     }
 
     @PostMapping("logout")
     public ResponseEntity<ApiResponse<Void>> logout(
-            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @RequestHeader(value = "X-Client-Type", required = false) String clientType,
+            @RequestHeader(value = "X-Refresh-Token", required = false) String appRefreshToken,
+            @CookieValue(name = "refreshToken", required = false) String cookieRefreshToken,
             HttpServletResponse response
     ) {
+        String refreshToken = "app".equals(clientType) ? appRefreshToken : cookieRefreshToken;
         authService.logout(refreshToken);
 
-        // 클라이언트 RefreshToken 쿠키 만료시키기
-        Cookie cookie = new Cookie("refreshToken", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(true);
-        cookie.setPath("/");
-        cookie.setMaxAge(0);
-        response.addCookie(cookie);
+        if (!"app".equals(clientType)) {
+            Cookie cookie = new Cookie("refreshToken", null);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(0);
+            response.addCookie(cookie);
+        }
 
         return ResponseEntity.ok(ApiResponse.success(null));
     }
