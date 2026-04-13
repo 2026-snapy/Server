@@ -33,4 +33,9 @@ public interface FriendRepository extends JpaRepository<Friend, FriendId> {
                    "WHERE (f1.user_a_id = :userAId OR f1.user_b_id = :userAId) " +
                    "AND (f2.user_a_id = :userBId OR f2.user_b_id = :userBId)", nativeQuery = true)
     List<FriendUserProjection> findMutualFriends(@Param("userAId") Long userAId, @Param("userBId") Long userBId);
+
+    @Query(value = "SELECT IF(f.user_a_id = :userId, f.user_b_id, f.user_a_id) " +
+                   "FROM friends f " +
+                   "WHERE f.user_a_id = :userId OR f.user_b_id = :userId", nativeQuery = true)
+    List<Long> findFriendIdsByUserId(@Param("userId") Long userId);
 }
