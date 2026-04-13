@@ -8,6 +8,7 @@ import com.gbsw.snapy.domain.stories.repository.StoryPhotoRepository;
 import com.gbsw.snapy.domain.stories.repository.StoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -21,7 +22,7 @@ public class StoryService {
     private final StoryPhotoRepository storyPhotoRepository;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Story createStory(Long userId, Long albumId) {
         LocalDateTime nowKst = LocalDateTime.now(KST_ZONE);
 
