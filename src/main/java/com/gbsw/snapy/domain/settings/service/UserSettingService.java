@@ -18,10 +18,9 @@ public class UserSettingService {
 
     private final UserSettingRepository userSettingRepository;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserSettingResponse getSettings(Long userId) {
-        UserSetting setting = userSettingRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        UserSetting setting = getOrCreate(userId);
         return UserSettingResponse.from(setting);
     }
 
@@ -31,17 +30,18 @@ public class UserSettingService {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE, "피드는 PUBLIC, FRIENDS_ONLY만 설정할 수 있습니다.");
         }
 
-        UserSetting setting = userSettingRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
+        UserSetting setting = getOrCreate(userId);
         setting.setFeedVisibility(request.visibility());
     }
 
     @Transactional
     public void updateAlbumVisibility(Long userId, UpdateAlbumVisibilityRequest request) {
-        UserSetting setting = userSettingRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-
+        UserSetting setting = getOrCreate(userId);
         setting.setAlbumVisibility(request.visibility());
+    }
+
+    private UserSetting getOrCreate(Long userId) {
+        return userSettingRepository.findById(userId)
+                .orElseGet(() -> userSettingRepository.save(UserSetting.builder().userId(userId).build()));
     }
 }
