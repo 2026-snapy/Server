@@ -1,5 +1,6 @@
 package com.gbsw.snapy.domain.friend.controller;
 
+import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse;
 import com.gbsw.snapy.domain.friend.service.FriendService;
 import com.gbsw.snapy.global.common.ApiResponse;
 import com.gbsw.snapy.global.security.CustomUserPrincipal;
@@ -14,6 +15,15 @@ import org.springframework.web.bind.annotation.*;
 public class FriendRequestController {
 
     private final FriendService friendService;
+
+    @GetMapping("/{receiverHandle}")
+    public ResponseEntity<ApiResponse<FriendRequestStatusResponse>> getStatus(
+            @PathVariable String receiverHandle,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        FriendRequestStatusResponse response = friendService.getRequestStatus(principal.getId(), receiverHandle);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 
     @PostMapping("/{receiverHandle}")
     public ResponseEntity<ApiResponse<Void>> sendRequest(
