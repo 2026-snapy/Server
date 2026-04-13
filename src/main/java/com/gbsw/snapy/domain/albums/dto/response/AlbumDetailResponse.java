@@ -4,6 +4,7 @@ import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
 import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record AlbumDetailResponse(
@@ -24,7 +25,8 @@ public record AlbumDetailResponse(
     public record AlbumPhotoSet(
             AlbumPhotoType type,
             String frontImageUrl,
-            String backImageUrl
+            String backImageUrl,
+            LocalDateTime createdAt
     ) {
     }
 }
