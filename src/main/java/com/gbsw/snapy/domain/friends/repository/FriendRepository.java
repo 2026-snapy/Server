@@ -21,6 +21,9 @@ public interface FriendRepository extends JpaRepository<Friend, FriendId> {
     @Query(value = "DELETE FROM friends WHERE (user_a_id = :userAId AND user_b_id = :userBId) OR (user_a_id = :userBId AND user_b_id = :userAId)", nativeQuery = true)
     void deleteFriendship(@Param("userAId") Long userAId, @Param("userBId") Long userBId);
 
+    @Query("SELECT COUNT(f) FROM Friend f WHERE f.id.userAId = :userId OR f.id.userBId = :userId")
+    long countFriendsByUserId(@Param("userId") Long userId);
+
     @Query(value = "SELECT u.handle, u.username, u.profile_image_url AS profileImageUrl " +
                    "FROM friends f JOIN users u ON u.id = IF(f.user_a_id = :userId, f.user_b_id, f.user_a_id) " +
                    "WHERE f.user_a_id = :userId OR f.user_b_id = :userId", nativeQuery = true)
