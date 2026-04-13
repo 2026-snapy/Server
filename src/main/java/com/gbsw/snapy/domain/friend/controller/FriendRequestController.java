@@ -1,9 +1,11 @@
 package com.gbsw.snapy.domain.friend.controller;
 
+import com.gbsw.snapy.domain.friend.dto.request.FriendRequestActionRequest;
 import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse;
 import com.gbsw.snapy.domain.friend.dto.response.ReceivedFriendRequestResponse;
 import com.gbsw.snapy.domain.friend.service.FriendService;
 import com.gbsw.snapy.global.common.ApiResponse;
+import jakarta.validation.Valid;
 import com.gbsw.snapy.global.security.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +20,16 @@ import java.util.List;
 public class FriendRequestController {
 
     private final FriendService friendService;
+
+    @PatchMapping("/{requestId}")
+    public ResponseEntity<ApiResponse<Void>> processRequest(
+            @PathVariable Long requestId,
+            @Valid @RequestBody FriendRequestActionRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        friendService.processRequest(principal.getId(), requestId, request.action());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 
     @GetMapping("/received")
     public ResponseEntity<ApiResponse<List<ReceivedFriendRequestResponse>>> getReceivedRequests(

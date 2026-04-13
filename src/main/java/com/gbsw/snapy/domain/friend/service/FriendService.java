@@ -1,8 +1,11 @@
 package com.gbsw.snapy.domain.friend.service;
 
+import com.gbsw.snapy.domain.friend.dto.request.FriendRequestActionRequest.Action;
 import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse;
 import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse.Status;
 import com.gbsw.snapy.domain.friend.dto.response.ReceivedFriendRequestResponse;
+import com.gbsw.snapy.domain.friend.entity.Friend;
+import com.gbsw.snapy.domain.friend.entity.FriendId;
 import com.gbsw.snapy.domain.friend.entity.FriendRequest;
 import com.gbsw.snapy.domain.friend.repository.FriendRepository;
 import com.gbsw.snapy.domain.friend.repository.FriendRequestRepository;
@@ -72,6 +75,24 @@ public class FriendService {
         }
 
         return result;
+    }
+
+    @Transactional
+    public void processRequest(Long receiverId, Long requestId, Action action) {
+        FriendRequest request = friendRequestRepository.findById(requestId)
+                .orElseThrow(() -> new CustomException(ErrorCode.FRIEND_REQUEST_NOT_FOUND));
+
+        if (!request.getReceiverId().equals(receiverId)) {
+            throw new CustomException(ErrorCode.FRIEND_REQUEST_ACCESS_DENIED);
+        }
+
+        if (action == Action.APPROVE) {
+            Long userAId = Math.min(request.getSenderId(), request.getReceiverId());
+            Long userBId = Math.max(request.getSenderId(), request.getReceiverId());
+            friendRepository.save(Friend.builder().id(new FriendId(userAId, userBId)).build());
+        }
+
+        friendRequestRepository.delete(request);
     }
 
     @Transactional
