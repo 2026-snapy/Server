@@ -7,6 +7,8 @@ import com.gbsw.snapy.domain.auth.dto.response.RefreshAccessTokenResponse;
 import com.gbsw.snapy.domain.auth.dto.response.RegisterResponse;
 import com.gbsw.snapy.domain.auth.entity.RefreshToken;
 import com.gbsw.snapy.domain.auth.repository.RefreshTokenRepository;
+import com.gbsw.snapy.domain.settings.entity.UserSetting;
+import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
 import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
     private final UserRepository userRepository;
+    private final UserSettingRepository userSettingRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
@@ -52,6 +55,7 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+        userSettingRepository.save(UserSetting.builder().userId(user.getId()).build());
 
         return RegisterResponse.from(user);
     }
