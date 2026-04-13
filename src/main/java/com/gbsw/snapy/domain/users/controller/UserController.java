@@ -74,4 +74,13 @@ public class UserController {
         List<FriendResponse> response = friendService.getFriends(handle);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @GetMapping("/{handle}/mutual-friends")
+    public ResponseEntity<ApiResponse<List<FriendResponse>>> getMutualFriends(
+            @PathVariable String handle,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        List<FriendResponse> response = friendService.getMutualFriends(principal.getId(), handle);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 }

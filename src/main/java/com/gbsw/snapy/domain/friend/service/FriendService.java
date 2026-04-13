@@ -86,6 +86,24 @@ public class FriendService {
         return result;
     }
 
+    public List<FriendResponse> getMutualFriends(Long myId, String handle) {
+        User target = userRepository.findByHandle(handle)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        if (myId.equals(target.getId())) {
+            throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        List<FriendUserProjection> projections = friendRepository.findMutualFriends(myId, target.getId());
+
+        List<FriendResponse> result = new ArrayList<>();
+        for (FriendUserProjection p : projections) {
+            result.add(FriendResponse.from(p));
+        }
+
+        return result;
+    }
+
     public List<ReceivedFriendRequestResponse> getReceivedRequests(Long userId) {
         List<ReceivedFriendRequestProjection> projections = friendRequestRepository.findReceivedRequests(userId);
 
