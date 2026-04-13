@@ -37,6 +37,10 @@ public class FriendService {
             throw new CustomException(ErrorCode.FRIEND_REQUEST_SELF);
         }
 
+        if (friendRepository.existsFriendship(senderId, receiver.getId())) {
+            throw new CustomException(ErrorCode.ALREADY_FRIEND);
+        }
+
         if (friendRequestRepository.existsBySenderIdAndReceiverId(senderId, receiver.getId())) {
             throw new CustomException(ErrorCode.FRIEND_REQUEST_ALREADY_SENT);
         }
