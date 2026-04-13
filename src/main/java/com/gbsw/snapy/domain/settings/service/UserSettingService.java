@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.settings.service;
 
 import com.gbsw.snapy.domain.settings.dto.request.UpdateAlbumVisibilityRequest;
 import com.gbsw.snapy.domain.settings.dto.request.UpdateFeedVisibilityRequest;
+import com.gbsw.snapy.domain.settings.dto.response.UserSettingResponse;
 import com.gbsw.snapy.domain.settings.entity.UserSetting;
 import com.gbsw.snapy.domain.settings.entity.Visibility;
 import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
@@ -16,6 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserSettingService {
 
     private final UserSettingRepository userSettingRepository;
+
+    @Transactional(readOnly = true)
+    public UserSettingResponse getSettings(Long userId) {
+        UserSetting setting = userSettingRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        return UserSettingResponse.from(setting);
+    }
 
     @Transactional
     public void updateFeedVisibility(Long userId, UpdateFeedVisibilityRequest request) {

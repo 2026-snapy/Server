@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.settings.controller;
 
 import com.gbsw.snapy.domain.settings.dto.request.UpdateAlbumVisibilityRequest;
 import com.gbsw.snapy.domain.settings.dto.request.UpdateFeedVisibilityRequest;
+import com.gbsw.snapy.domain.settings.dto.response.UserSettingResponse;
 import com.gbsw.snapy.domain.settings.service.UserSettingService;
 import com.gbsw.snapy.global.common.ApiResponse;
 import com.gbsw.snapy.global.security.CustomUserPrincipal;
@@ -17,6 +18,13 @@ import org.springframework.web.bind.annotation.*;
 public class UserSettingController {
 
     private final UserSettingService userSettingService;
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<UserSettingResponse>> getSettings(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        return ResponseEntity.ok(ApiResponse.success(userSettingService.getSettings(principal.getId())));
+    }
 
     @PatchMapping("/feed-visibility")
     public ResponseEntity<ApiResponse<Void>> updateFeedVisibility(
