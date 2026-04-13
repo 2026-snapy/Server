@@ -3,12 +3,14 @@ package com.gbsw.snapy.domain.friend.service;
 import com.gbsw.snapy.domain.friend.dto.request.FriendRequestActionRequest.Action;
 import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse;
 import com.gbsw.snapy.domain.friend.dto.response.FriendRequestStatusResponse.Status;
+import com.gbsw.snapy.domain.friend.dto.response.FriendResponse;
 import com.gbsw.snapy.domain.friend.dto.response.ReceivedFriendRequestResponse;
 import com.gbsw.snapy.domain.friend.entity.Friend;
 import com.gbsw.snapy.domain.friend.entity.FriendId;
 import com.gbsw.snapy.domain.friend.entity.FriendRequest;
 import com.gbsw.snapy.domain.friend.repository.FriendRepository;
 import com.gbsw.snapy.domain.friend.repository.FriendRequestRepository;
+import com.gbsw.snapy.domain.friend.repository.projection.FriendUserProjection;
 import com.gbsw.snapy.domain.friend.repository.projection.ReceivedFriendRequestProjection;
 import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
@@ -68,6 +70,20 @@ public class FriendService {
         }
 
         return new FriendRequestStatusResponse(Status.NONE);
+    }
+
+    public List<FriendResponse> getFriends(String handle) {
+        User user = userRepository.findByHandle(handle)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        List<FriendUserProjection> projections = friendRepository.findFriendsByUserId(user.getId());
+
+        List<FriendResponse> result = new ArrayList<>();
+        for (FriendUserProjection p : projections) {
+            result.add(FriendResponse.from(p));
+        }
+
+        return result;
     }
 
     public List<ReceivedFriendRequestResponse> getReceivedRequests(Long userId) {
