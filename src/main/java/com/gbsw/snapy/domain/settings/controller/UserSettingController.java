@@ -1,6 +1,6 @@
 package com.gbsw.snapy.domain.settings.controller;
 
-import com.gbsw.snapy.domain.settings.dto.request.UpdateAlbumVisibilityRequest;
+import com.gbsw.snapy.domain.settings.dto.request.UpdatePastAlbumVisibilityRequest;
 import com.gbsw.snapy.domain.settings.dto.request.UpdateFeedVisibilityRequest;
 import com.gbsw.snapy.domain.settings.dto.response.UserSettingResponse;
 import com.gbsw.snapy.domain.settings.service.UserSettingService;
@@ -35,12 +35,12 @@ public class UserSettingController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PatchMapping("/album-visibility")
-    public ResponseEntity<ApiResponse<Void>> updateAlbumVisibility(
-            @Valid @RequestBody UpdateAlbumVisibilityRequest request,
+    @PatchMapping("/past-album-visibility")
+    public ResponseEntity<ApiResponse<Void>> updatePastAlbumVisibility(
+            @Valid @RequestBody UpdatePastAlbumVisibilityRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        userSettingService.updateAlbumVisibility(principal.getId(), request);
+        userSettingService.updatePastAlbumVisibility(principal.getId(), request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
