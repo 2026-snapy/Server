@@ -29,13 +29,22 @@ public enum ErrorCode {
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     DUPLICATE_PHONE(HttpStatus.CONFLICT, "이미 사용 중인 전화번호입니다."),
 
+    // S3 general
+    FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "파일 삭제에 실패했습니다."),
+
     // Image
     IMAGE_EMPTY(HttpStatus.BAD_REQUEST, "이미지가 비어있습니다."),
     INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
     IMAGE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "이미지 크기가 10MB를 초과합니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드에 실패했습니다."),
-    IMAGE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 삭제에 실패했습니다."),
     IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "이미지를 찾을 수 없습니다."),
+
+    // Audio
+    AUDIO_EMPTY(HttpStatus.BAD_REQUEST, "오디오 파일이 비어있습니다."),
+    INVALID_AUDIO_TYPE(HttpStatus.BAD_REQUEST, "지원하지 않는 오디오 파일 형식입니다. (.m4a만 허용)"),
+    AUDIO_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "오디오 파일 크기가 20MB를 초과합니다."),
+    AUDIO_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "오디오 업로드에 실패했습니다."),
+    AUDIO_NOT_FOUND(HttpStatus.NOT_FOUND, "오디오를 찾을 수 없습니다."),
 
     // Album
     ALBUM_NOT_FOUND(HttpStatus.NOT_FOUND, "앨범을 찾을 수 없습니다."),
