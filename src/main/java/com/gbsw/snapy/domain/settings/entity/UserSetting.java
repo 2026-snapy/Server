@@ -18,13 +18,13 @@ public class UserSetting {
     private Visibility feedVisibility;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "album_visibility", nullable = false)
-    private Visibility albumVisibility;
+    @Column(name = "past_album_visibility", nullable = false)
+    private Visibility pastAlbumVisibility;
 
     @Builder
     public UserSetting(Long userId) {
         this.userId = userId;
         this.feedVisibility = Visibility.FRIENDS_ONLY;
-        this.albumVisibility = Visibility.FRIENDS_ONLY;
+        this.pastAlbumVisibility = Visibility.FRIENDS_ONLY;
     }
 }
