@@ -48,10 +48,10 @@ public class UserService {
 
         String oldKey = user.getBackGroundImageKey();
 
-        S3Service.S3UploadResult result = s3Service.upload(file, userId);
+        S3Service.S3UploadResult result = s3Service.uploadImage(file, userId);
 
         try {
-            user.setBackGroundImageUrl(result.imageUrl());
+            user.setBackGroundImageUrl(result.fileUrl());
             user.setBackGroundImageKey(result.s3Key());
         } catch (Exception e) {
             s3Service.delete(result.s3Key());
@@ -74,10 +74,10 @@ public class UserService {
 
         String oldKey = user.getProfileImageKey();
 
-        S3Service.S3UploadResult result = s3Service.upload(file, userId);
+        S3Service.S3UploadResult result = s3Service.uploadImage(file, userId);
 
         try {
-            user.setProfileImageUrl(result.imageUrl());
+            user.setProfileImageUrl(result.fileUrl());
             user.setProfileImageKey(result.s3Key());
         } catch (Exception e) {
             s3Service.delete(result.s3Key());

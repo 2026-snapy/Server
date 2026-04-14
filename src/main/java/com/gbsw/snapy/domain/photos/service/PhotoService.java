@@ -22,13 +22,13 @@ public class PhotoService {
 
     @Transactional
     public PhotoUploadResponse upload(MultipartFile file, Long userId, PhotoType type) {
-        S3Service.S3UploadResult result = s3Service.upload(file, userId);
+        S3Service.S3UploadResult result = s3Service.uploadImage(file, userId);
 
         try {
             Photo photo = Photo.builder()
                     .userId(userId)
                     .s3Key(result.s3Key())
-                    .imageUrl(result.imageUrl())
+                    .imageUrl(result.fileUrl())
                     .type(type)
                     .build();
 
