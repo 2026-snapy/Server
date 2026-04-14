@@ -22,6 +22,10 @@ import com.gbsw.snapy.global.exception.ErrorCode;
 import com.gbsw.snapy.domain.stories.entity.Story;
 import com.gbsw.snapy.domain.stories.repository.StoryRepository;
 import com.gbsw.snapy.domain.stories.service.StoryService;
+import com.gbsw.snapy.domain.friends.repository.FriendRepository;
+import com.gbsw.snapy.domain.settings.entity.UserSetting;
+import com.gbsw.snapy.domain.settings.entity.Visibility;
+import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
 import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +58,8 @@ public class AlbumService {
     private final S3Service s3Service;
     private final StoryService storyService;
     private final StoryRepository storyRepository;
+    private final UserSettingRepository userSettingRepository;
+    private final FriendRepository friendRepository;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
     @Transactional
@@ -203,18 +209,49 @@ public class AlbumService {
     }
 
     @Transactional(readOnly = true)
-    public List<AlbumListResponse> getAlbumsByMonth(Long userId, int month) {
+    public List<AlbumListResponse> getAlbumsByMonth(Long targetUserId, int month, Long requesterId) {
         if (month < 1 || month > 12) {
             throw new CustomException(ErrorCode.INVALID_MONTH);
         }
 
-        int year = ZonedDateTime.now(KST_ZONE).getYear();
+        boolean isOwner = targetUserId.equals(requesterId);
+        YearMonth currentMonth = YearMonth.now(KST_ZONE);
+        int year = currentMonth.getYear();
+        boolean isCurrentMonth = YearMonth.of(year, month).equals(currentMonth);
+
+        if (!isOwner) {
+            UserSetting setting = userSettingRepository.findById(targetUserId).orElse(null);
+
+            if (isCurrentMonth) {
+                Visibility feedVisibility = (setting != null) ? setting.getFeedVisibility() : Visibility.FRIENDS_ONLY;
+                if (feedVisibility == Visibility.FRIENDS_ONLY) {
+                    if (!friendRepository.existsFriendship(requesterId, targetUserId)) {
+                        throw new CustomException(ErrorCode.ACCESS_DENIED);
+                    }
+                }
+            } else {
+                Visibility albumVisibility = (setting != null) ? setting.getAlbumVisibility() : Visibility.FRIENDS_ONLY;
+                if (albumVisibility == Visibility.ONLY_ME) {
+                    throw new CustomException(ErrorCode.ACCESS_DENIED);
+                }
+                if (albumVisibility == Visibility.FRIENDS_ONLY) {
+                    if (!friendRepository.existsFriendship(requesterId, targetUserId)) {
+                        throw new CustomException(ErrorCode.ACCESS_DENIED);
+                    }
+                }
+            }
+        }
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate start = yearMonth.atDay(1);
         LocalDate end = yearMonth.atEndOfMonth();
 
         List<DailyAlbum> albums = dailyAlbumRepository
-                .findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(userId, start, end);
+                .findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(targetUserId, start, end);
+        if (!isOwner) {
+            albums = albums.stream()
+                    .filter(a -> a.getStatus() == AlbumStatus.PUBLISHED)
+                    .toList();
+        }
         if (albums.isEmpty()) {
             return List.of();
         }
