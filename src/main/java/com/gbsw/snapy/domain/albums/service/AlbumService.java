@@ -32,6 +32,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -138,7 +139,7 @@ public class AlbumService {
 
         List<PhotoSetView> sets = loadPhotoSets(album.getId());
         List<AlbumTodayResponse.AlbumPhotoSet> mapped = sets.stream()
-                .map(s -> new AlbumTodayResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl()))
+                .map(s -> new AlbumTodayResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl(), s.createdAt()))
                 .toList();
         return AlbumTodayResponse.of(album, mapped);
     }
@@ -154,7 +155,7 @@ public class AlbumService {
 
         List<PhotoSetView> sets = loadPhotoSets(album.getId());
         List<AlbumDetailResponse.AlbumPhotoSet> mapped = sets.stream()
-                .map(s -> new AlbumDetailResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl()))
+                .map(s -> new AlbumDetailResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl(), s.createdAt()))
                 .toList();
         return AlbumDetailResponse.of(album, mapped);
     }
@@ -176,10 +177,12 @@ public class AlbumService {
 
         Map<AlbumPhotoType, String> frontUrls = new EnumMap<>(AlbumPhotoType.class);
         Map<AlbumPhotoType, String> backUrls = new EnumMap<>(AlbumPhotoType.class);
+        Map<AlbumPhotoType, LocalDateTime> createdAts = new EnumMap<>(AlbumPhotoType.class);
         for (AlbumPhoto ap : albumPhotos) {
             Photo photo = photoById.get(ap.getPhotoId());
             if (ap.getSide() == PhotoType.FRONT) {
                 frontUrls.put(ap.getType(), photo.getImageUrl());
+                createdAts.put(ap.getType(), photo.getCreatedAt());
             } else {
                 backUrls.put(ap.getType(), photo.getImageUrl());
             }
@@ -188,13 +191,15 @@ public class AlbumService {
         List<PhotoSetView> sets = new ArrayList<>();
         for (AlbumPhotoType type : AlbumPhotoType.values()) {
             if (frontUrls.containsKey(type) || backUrls.containsKey(type)) {
-                sets.add(new PhotoSetView(type, frontUrls.get(type), backUrls.get(type)));
+                sets.add(new PhotoSetView(type, frontUrls.get(type), backUrls.get(type),
+                        createdAts.get(type)));
             }
         }
         return sets;
     }
 
-    private record PhotoSetView(AlbumPhotoType type, String frontImageUrl, String backImageUrl) {
+    private record PhotoSetView(AlbumPhotoType type, String frontImageUrl, String backImageUrl,
+                                    LocalDateTime createdAt) {
     }
 
     @Transactional(readOnly = true)
@@ -210,6 +215,55 @@ public class AlbumService {
 
         List<DailyAlbum> albums = dailyAlbumRepository
                 .findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(userId, start, end);
+        if (albums.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> albumIds = albums.stream().map(DailyAlbum::getId).toList();
+        List<AlbumPhoto> frontPhotos = albumPhotoRepository
+                .findByAlbumIdInAndSide(albumIds, PhotoType.FRONT);
+
+        Map<Long, AlbumPhoto> thumbnailByAlbumId = new HashMap<>();
+        for (AlbumPhoto ap : frontPhotos) {
+            AlbumPhoto current = thumbnailByAlbumId.get(ap.getAlbumId());
+            if (current == null || ap.getType().ordinal() < current.getType().ordinal()) {
+                thumbnailByAlbumId.put(ap.getAlbumId(), ap);
+            }
+        }
+
+        List<Long> photoIds = thumbnailByAlbumId.values().stream()
+                .map(AlbumPhoto::getPhotoId)
+                .toList();
+        Map<Long, Photo> photoById = new HashMap<>();
+        if (!photoIds.isEmpty()) {
+            for (Photo photo : photoRepository.findAllById(photoIds)) {
+                photoById.put(photo.getId(), photo);
+            }
+            if (photoById.size() != photoIds.size()) {
+                throw new CustomException(ErrorCode.IMAGE_NOT_FOUND);
+            }
+        }
+
+        List<AlbumListResponse> result = new ArrayList<>(albums.size());
+        for (DailyAlbum album : albums) {
+            AlbumPhoto thumbnail = thumbnailByAlbumId.get(album.getId());
+            String thumbnailUrl = null;
+            if (thumbnail != null) {
+                Photo photo = photoById.get(thumbnail.getPhotoId());
+                thumbnailUrl = photo.getImageUrl();
+            }
+            result.add(AlbumListResponse.of(album, thumbnailUrl));
+        }
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<AlbumListResponse> getCalendarThumbnails(Long userId) {
+        LocalDate today = LocalDate.now(KST_ZONE);
+        LocalDate fiveMonthsAgo = today.minusMonths(5).withDayOfMonth(1);
+
+        List<DailyAlbum> albums = dailyAlbumRepository
+                .findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(userId, fiveMonthsAgo, today);
         if (albums.isEmpty()) {
             return List.of();
         }

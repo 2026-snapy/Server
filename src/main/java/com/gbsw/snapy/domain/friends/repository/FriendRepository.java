@@ -21,6 +21,9 @@ public interface FriendRepository extends JpaRepository<Friend, FriendId> {
     @Query(value = "DELETE FROM friends WHERE (user_a_id = :userAId AND user_b_id = :userBId) OR (user_a_id = :userBId AND user_b_id = :userAId)", nativeQuery = true)
     void deleteFriendship(@Param("userAId") Long userAId, @Param("userBId") Long userBId);
 
+    @Query("SELECT COUNT(f) FROM Friend f WHERE f.id.userAId = :userId OR f.id.userBId = :userId")
+    long countFriendsByUserId(@Param("userId") Long userId);
+
     @Query(value = "SELECT u.handle, u.username, u.profile_image_url AS profileImageUrl " +
                    "FROM friends f JOIN users u ON u.id = IF(f.user_a_id = :userId, f.user_b_id, f.user_a_id) " +
                    "WHERE f.user_a_id = :userId OR f.user_b_id = :userId", nativeQuery = true)
@@ -33,4 +36,9 @@ public interface FriendRepository extends JpaRepository<Friend, FriendId> {
                    "WHERE (f1.user_a_id = :userAId OR f1.user_b_id = :userAId) " +
                    "AND (f2.user_a_id = :userBId OR f2.user_b_id = :userBId)", nativeQuery = true)
     List<FriendUserProjection> findMutualFriends(@Param("userAId") Long userAId, @Param("userBId") Long userBId);
+
+    @Query(value = "SELECT IF(f.user_a_id = :userId, f.user_b_id, f.user_a_id) " +
+                   "FROM friends f " +
+                   "WHERE f.user_a_id = :userId OR f.user_b_id = :userId", nativeQuery = true)
+    List<Long> findFriendIdsByUserId(@Param("userId") Long userId);
 }

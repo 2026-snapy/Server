@@ -6,14 +6,16 @@ public record UserProfileResponse(
         String handle,
         String username,
         String profileImageUrl,
-        String backgroundImageUrl
+        String backgroundImageUrl,
+        long friendCount
 ) {
-    public static UserProfileResponse from(User user) {
+    public static UserProfileResponse from(User user, long friendCount) {
         return new UserProfileResponse(
                 user.getHandle(),
                 user.getUsername(),
                 user.getProfileImageUrl(),
-                user.getBackGroundImageUrl()
+                user.getBackGroundImageUrl(),
+                friendCount
         );
     }
 }
