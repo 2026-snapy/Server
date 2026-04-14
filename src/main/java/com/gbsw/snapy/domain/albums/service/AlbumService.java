@@ -155,8 +155,31 @@ public class AlbumService {
         DailyAlbum album = dailyAlbumRepository.findById(albumId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
 
-        if (!album.getUserId().equals(userId) && album.getStatus() != AlbumStatus.PUBLISHED) {
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        if (!album.getUserId().equals(userId)) {
+            if (album.getStatus() != AlbumStatus.PUBLISHED) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+
+            YearMonth albumMonth = YearMonth.from(album.getAlbumDate());
+            YearMonth currentMonth = YearMonth.now(KST_ZONE);
+            boolean isCurrentMonth = albumMonth.equals(currentMonth);
+
+            UserSetting setting = userSettingRepository.findById(album.getUserId()).orElse(null);
+
+            if (isCurrentMonth) {
+                Visibility v = (setting != null) ? setting.getFeedVisibility() : Visibility.FRIENDS_ONLY;
+                if (v == Visibility.FRIENDS_ONLY && !friendRepository.existsFriendship(userId, album.getUserId())) {
+                    throw new CustomException(ErrorCode.ACCESS_DENIED);
+                }
+            } else {
+                Visibility v = (setting != null) ? setting.getAlbumVisibility() : Visibility.FRIENDS_ONLY;
+                if (v == Visibility.ONLY_ME) {
+                    throw new CustomException(ErrorCode.ACCESS_DENIED);
+                }
+                if (v == Visibility.FRIENDS_ONLY && !friendRepository.existsFriendship(userId, album.getUserId())) {
+                    throw new CustomException(ErrorCode.ACCESS_DENIED);
+                }
+            }
         }
 
         List<PhotoSetView> sets = loadPhotoSets(album.getId());
