@@ -94,6 +94,18 @@ public class StoryService {
         }
 
         List<Long> storyUserIds = stories.stream().map(Story::getUserId).distinct().toList();
+
+        Map<Long, Visibility> visibilityMap = userSettingRepository.findAllById(storyUserIds).stream()
+                .collect(Collectors.toMap(UserSetting::getUserId, UserSetting::getFeedVisibility));
+
+        stories = stories.stream()
+                .filter(story -> visibilityMap.getOrDefault(story.getUserId(), Visibility.FRIENDS_ONLY) != Visibility.ONLY_ME)
+                .toList();
+
+        if (stories.isEmpty()) {
+            return List.of();
+        }
+
         Map<Long, User> userMap = userRepository.findAllById(storyUserIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
@@ -158,6 +170,10 @@ public class StoryService {
             Visibility feedVisibility = userSettingRepository.findById(ownerId)
                     .map(UserSetting::getFeedVisibility)
                     .orElse(Visibility.FRIENDS_ONLY);
+
+            if (feedVisibility == Visibility.ONLY_ME) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
 
             if (feedVisibility == Visibility.FRIENDS_ONLY) {
                 boolean isFriend = friendRepository.existsFriendship(userId, ownerId);
