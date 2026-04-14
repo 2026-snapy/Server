@@ -5,9 +5,9 @@ import com.gbsw.snapy.domain.settings.entity.Visibility;
 
 public record UserSettingResponse(
         Visibility feedVisibility,
-        Visibility albumVisibility
+        Visibility pastAlbumVisibility
 ) {
     public static UserSettingResponse from(UserSetting setting) {
-        return new UserSettingResponse(setting.getFeedVisibility(), setting.getAlbumVisibility());
+        return new UserSettingResponse(setting.getFeedVisibility(), setting.getPastAlbumVisibility());
     }
 }

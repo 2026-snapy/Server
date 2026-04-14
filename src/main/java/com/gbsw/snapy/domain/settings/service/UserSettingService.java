@@ -1,6 +1,6 @@
 package com.gbsw.snapy.domain.settings.service;
 
-import com.gbsw.snapy.domain.settings.dto.request.UpdateAlbumVisibilityRequest;
+import com.gbsw.snapy.domain.settings.dto.request.UpdatePastAlbumVisibilityRequest;
 import com.gbsw.snapy.domain.settings.dto.request.UpdateFeedVisibilityRequest;
 import com.gbsw.snapy.domain.settings.dto.response.UserSettingResponse;
 import com.gbsw.snapy.domain.settings.entity.UserSetting;
@@ -38,12 +38,12 @@ public class UserSettingService {
     }
 
     @Transactional
-    public void updateAlbumVisibility(Long userId, UpdateAlbumVisibilityRequest request) {
+    public void updatePastAlbumVisibility(Long userId, UpdatePastAlbumVisibilityRequest request) {
         if (request.visibility() == null) {
             throw new CustomException(ErrorCode.INVALID_INPUT_VALUE, "visibility는 필수입니다. (PUBLIC, FRIENDS_ONLY, ONLY_ME)");
         }
         UserSetting setting = getOrCreate(userId);
-        setting.setAlbumVisibility(request.visibility());
+        setting.setPastAlbumVisibility(request.visibility());
     }
 
     private UserSetting getOrCreate(Long userId) {

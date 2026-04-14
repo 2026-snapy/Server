@@ -172,7 +172,7 @@ public class AlbumService {
                     throw new CustomException(ErrorCode.ACCESS_DENIED);
                 }
             } else {
-                Visibility v = (setting != null) ? setting.getAlbumVisibility() : Visibility.FRIENDS_ONLY;
+                Visibility v = (setting != null) ? setting.getPastAlbumVisibility() : Visibility.FRIENDS_ONLY;
                 if (v == Visibility.ONLY_ME) {
                     throw new CustomException(ErrorCode.ACCESS_DENIED);
                 }
@@ -253,7 +253,7 @@ public class AlbumService {
                     }
                 }
             } else {
-                Visibility albumVisibility = (setting != null) ? setting.getAlbumVisibility() : Visibility.FRIENDS_ONLY;
+                Visibility albumVisibility = (setting != null) ? setting.getPastAlbumVisibility() : Visibility.FRIENDS_ONLY;
                 if (albumVisibility == Visibility.ONLY_ME) {
                     throw new CustomException(ErrorCode.ACCESS_DENIED);
                 }
