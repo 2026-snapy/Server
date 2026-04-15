@@ -9,9 +9,13 @@ import com.gbsw.snapy.domain.settings.entity.UserSetting;
 import com.gbsw.snapy.domain.settings.entity.Visibility;
 import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
 import com.gbsw.snapy.domain.stories.dto.response.StoryDetailResponse;
+import com.gbsw.snapy.domain.stories.dto.response.StoryLikeListResponse;
+import com.gbsw.snapy.domain.stories.dto.response.StoryLikeResponse;
 import com.gbsw.snapy.domain.stories.dto.response.StoryListResponse;
 import com.gbsw.snapy.domain.stories.entity.Story;
+import com.gbsw.snapy.domain.stories.entity.StoryLike;
 import com.gbsw.snapy.domain.stories.entity.StoryPhoto;
+import com.gbsw.snapy.domain.stories.repository.StoryLikeRepository;
 import com.gbsw.snapy.domain.stories.repository.StoryPhotoRepository;
 import com.gbsw.snapy.domain.stories.repository.StoryRepository;
 import com.gbsw.snapy.domain.users.entity.User;
@@ -28,6 +32,7 @@ import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -37,6 +42,7 @@ public class StoryService {
 
     private final StoryRepository storyRepository;
     private final StoryPhotoRepository storyPhotoRepository;
+    private final StoryLikeRepository storyLikeRepository;
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
     private final PhotoRepository photoRepository;
@@ -228,5 +234,88 @@ public class StoryService {
                 story.getCreatedAt(),
                 story.getExpiresAt()
         );
+    }
+
+    @Transactional
+    public StoryLikeResponse toggleLike(Long storyId, Long userId) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORY_NOT_FOUND));
+
+        LocalDateTime nowKst = LocalDateTime.now(KST_ZONE);
+        if (story.isExpired(nowKst)) {
+            throw new CustomException(ErrorCode.STORY_EXPIRED);
+        }
+
+        Long ownerId = story.getUserId();
+        if (!ownerId.equals(userId)) {
+            Visibility feedVisibility = userSettingRepository.findById(ownerId)
+                    .map(UserSetting::getFeedVisibility)
+                    .orElse(Visibility.FRIENDS_ONLY);
+
+            if (feedVisibility == Visibility.ONLY_ME) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+
+            if (feedVisibility == Visibility.FRIENDS_ONLY) {
+                boolean isFriend = friendRepository.existsFriendship(userId, ownerId);
+                if (!isFriend) {
+                    throw new CustomException(ErrorCode.ACCESS_DENIED);
+                }
+            }
+        }
+
+        Optional<StoryLike> existing = storyLikeRepository.findByStoryIdAndUserId(storyId, userId);
+
+        boolean liked;
+        if (existing.isPresent()) {
+            storyLikeRepository.delete(existing.get());
+            liked = false;
+        } else {
+            storyLikeRepository.save(
+                    StoryLike.builder()
+                            .storyId(storyId)
+                            .userId(userId)
+                            .build()
+            );
+            liked = true;
+        }
+
+        long likeCount = storyLikeRepository.countByStoryId(storyId);
+        return new StoryLikeResponse(storyId, liked, likeCount);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StoryLikeListResponse> getLikes(Long storyId, Long userId) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new CustomException(ErrorCode.STORY_NOT_FOUND));
+
+        if (!story.getUserId().equals(userId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        List<StoryLike> likes = storyLikeRepository.findByStoryIdOrderByCreatedAtDesc(storyId);
+        if (likes.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> likeUserIds = likes.stream().map(StoryLike::getUserId).toList();
+        Map<Long, User> userMap = userRepository.findAllById(likeUserIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        List<StoryLikeListResponse> result = new ArrayList<>();
+        for (StoryLike like : likes) {
+            User user = userMap.get(like.getUserId());
+            if (user == null) continue;
+
+            result.add(new StoryLikeListResponse(
+                    user.getId(),
+                    user.getHandle(),
+                    user.getUsername(),
+                    user.getProfileImageUrl(),
+                    like.getCreatedAt()
+            ));
+        }
+
+        return result;
     }
 }
