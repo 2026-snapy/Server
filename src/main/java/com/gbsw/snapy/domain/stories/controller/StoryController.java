@@ -1,6 +1,8 @@
 package com.gbsw.snapy.domain.stories.controller;
 
 import com.gbsw.snapy.domain.stories.dto.response.StoryDetailResponse;
+import com.gbsw.snapy.domain.stories.dto.response.StoryLikeListResponse;
+import com.gbsw.snapy.domain.stories.dto.response.StoryLikeResponse;
 import com.gbsw.snapy.domain.stories.dto.response.StoryListResponse;
 import com.gbsw.snapy.domain.stories.service.StoryService;
 import com.gbsw.snapy.global.common.ApiResponse;
@@ -33,6 +35,24 @@ public class StoryController {
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         StoryDetailResponse response = storyService.getStoryDetail(storyId, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PostMapping("/{storyId}/likes")
+    public ResponseEntity<ApiResponse<StoryLikeResponse>> toggleLike(
+            @PathVariable Long storyId,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        StoryLikeResponse response = storyService.toggleLike(storyId, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{storyId}/likes")
+    public ResponseEntity<ApiResponse<List<StoryLikeListResponse>>> getLikes(
+            @PathVariable Long storyId,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        List<StoryLikeListResponse> response = storyService.getLikes(storyId, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
