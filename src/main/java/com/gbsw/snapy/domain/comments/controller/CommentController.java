@@ -16,12 +16,12 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/albums/{albumId}/comments")
+@RequestMapping("/api")
 public class CommentController {
 
     private final CommentService commentService;
 
-    @PostMapping
+    @PostMapping("albums/{albumId}/comments")
     public ResponseEntity<ApiResponse<CommentUploadResponse>> upload(
             @PathVariable Long albumId,
             @Valid @ModelAttribute CommentUploadRequest request,
@@ -31,7 +31,7 @@ public class CommentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
-    @GetMapping
+    @GetMapping("albums/{albumId}/comments")
     public ResponseEntity<ApiResponse<CursorResponse<CommentResponse>>> getComments(
             @PathVariable Long albumId,
             @RequestParam(required = false) Long cursor,
