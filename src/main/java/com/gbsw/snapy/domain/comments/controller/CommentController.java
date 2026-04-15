@@ -41,4 +41,13 @@ public class CommentController {
         CursorResponse<CommentResponse> response = commentService.getComments(albumId, cursor, size);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @DeleteMapping("comments/{commentId}")
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        commentService.delete(commentId, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }

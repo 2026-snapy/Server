@@ -115,4 +115,33 @@ public class CommentService {
 
         return CursorResponse.of(content, nextCursor, hasNext);
     }
+
+    @Transactional
+    public void delete(Long commentId, Long userId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CustomException(ErrorCode.COMMENT_NOT_FOUND));
+
+        if (!comment.getUser().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        CommentAttachment attachment = comment.getAttachment();
+        Long photoId = (attachment != null && attachment.getPhoto() != null) ? attachment.getPhoto().getId() : null;
+        Long audioId = (attachment != null && attachment.getAudio() != null) ? attachment.getAudio().getId() : null;
+
+        commentRepository.delete(comment);
+        commentRepository.flush();
+
+        if (attachment != null) {
+            commentAttachmentRepository.delete(attachment);
+            commentAttachmentRepository.flush();
+        }
+
+        if (photoId != null) {
+            photoService.delete(photoId, userId);
+        }
+        if (audioId != null) {
+            audioService.delete(audioId, userId);
+        }
+    }
 }

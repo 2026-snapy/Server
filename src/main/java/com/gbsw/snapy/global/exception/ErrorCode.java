@@ -71,6 +71,7 @@ public enum ErrorCode {
     FRIEND_REQUEST_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 친구 신청에 대한 권한이 없습니다."),
 
     // Comment
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
     INVALID_COMMENT_ATTACHMENT(HttpStatus.BAD_REQUEST, "댓글 첨부 데이터가 올바르지 않습니다.");
 
     private final HttpStatus status;
