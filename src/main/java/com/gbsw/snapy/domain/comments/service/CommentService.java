@@ -7,7 +7,9 @@ import com.gbsw.snapy.domain.audios.entity.Audio;
 import com.gbsw.snapy.domain.audios.repository.AudioRepository;
 import com.gbsw.snapy.domain.audios.service.AudioService;
 import com.gbsw.snapy.domain.comments.dto.request.CommentUploadRequest;
+import com.gbsw.snapy.domain.comments.dto.response.CommentResponse;
 import com.gbsw.snapy.domain.comments.dto.response.CommentUploadResponse;
+import com.gbsw.snapy.global.common.CursorResponse;
 import com.gbsw.snapy.domain.comments.entity.Comment;
 import com.gbsw.snapy.domain.comments.entity.CommentAttachment;
 import com.gbsw.snapy.domain.comments.repository.CommentAttachmentRepository;
@@ -25,6 +27,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -86,5 +90,29 @@ public class CommentService {
         );
 
         return CommentUploadResponse.from(comment);
+    }
+
+    @Transactional(readOnly = true)
+    public CursorResponse<CommentResponse> getComments(Long albumId, Long cursor, int size) {
+        if (!dailyAlbumRepository.existsById(albumId)) {
+            throw new CustomException(ErrorCode.ALBUM_NOT_FOUND);
+        }
+
+        List<Comment> comments = (cursor == null)
+                ? commentRepository.findByAlbumIdLatest(albumId, size + 1)
+                : commentRepository.findByAlbumIdWithCursor(albumId, cursor, size + 1);
+
+        boolean hasNext = comments.size() > size;
+        if (hasNext) {
+            comments = comments.subList(0, size);
+        }
+
+        List<CommentResponse> content = comments.stream()
+                .map(CommentResponse::from)
+                .toList();
+
+        Long nextCursor = hasNext ? comments.get(comments.size() - 1).getId() : null;
+
+        return CursorResponse.of(content, nextCursor, hasNext);
     }
 }

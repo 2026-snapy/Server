@@ -1,9 +1,11 @@
 package com.gbsw.snapy.domain.comments.controller;
 
 import com.gbsw.snapy.domain.comments.dto.request.CommentUploadRequest;
+import com.gbsw.snapy.domain.comments.dto.response.CommentResponse;
 import com.gbsw.snapy.domain.comments.dto.response.CommentUploadResponse;
 import com.gbsw.snapy.domain.comments.service.CommentService;
 import com.gbsw.snapy.global.common.ApiResponse;
+import com.gbsw.snapy.global.common.CursorResponse;
 import com.gbsw.snapy.global.security.CustomUserPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,5 +29,16 @@ public class CommentController {
     ) {
         CommentUploadResponse response = commentService.upload(albumId, principal.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<CursorResponse<CommentResponse>>> getComments(
+            @PathVariable Long albumId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        CursorResponse<CommentResponse> response = commentService.getComments(albumId, cursor, size);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
