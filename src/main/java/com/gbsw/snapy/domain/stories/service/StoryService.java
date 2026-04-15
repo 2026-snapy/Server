@@ -246,6 +246,24 @@ public class StoryService {
             throw new CustomException(ErrorCode.STORY_EXPIRED);
         }
 
+        Long ownerId = story.getUserId();
+        if (!ownerId.equals(userId)) {
+            Visibility feedVisibility = userSettingRepository.findById(ownerId)
+                    .map(UserSetting::getFeedVisibility)
+                    .orElse(Visibility.FRIENDS_ONLY);
+
+            if (feedVisibility == Visibility.ONLY_ME) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+
+            if (feedVisibility == Visibility.FRIENDS_ONLY) {
+                boolean isFriend = friendRepository.existsFriendship(userId, ownerId);
+                if (!isFriend) {
+                    throw new CustomException(ErrorCode.ACCESS_DENIED);
+                }
+            }
+        }
+
         Optional<StoryLike> existing = storyLikeRepository.findByStoryIdAndUserId(storyId, userId);
 
         boolean liked;
