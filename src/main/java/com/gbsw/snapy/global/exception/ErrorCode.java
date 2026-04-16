@@ -58,6 +58,7 @@ public enum ErrorCode {
     // Story
     STORY_NOT_FOUND(HttpStatus.NOT_FOUND, "스토리를 찾을 수 없습니다."),
     STORY_EXPIRED(HttpStatus.BAD_REQUEST, "만료된 스토리입니다."),
+    CANNOT_LIKE_OWN_STORY(HttpStatus.BAD_REQUEST, "본인의 스토리에는 좋아요를 누를 수 없습니다."),
 
     // Notification
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "알림을 찾을 수 없습니다."),

@@ -21,10 +21,6 @@ public class NotificationEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleStoryLiked(StoryLikedEvent event) {
-        if (event.senderId().equals(event.ownerId())) {
-            return;
-        }
-
         try {
             notificationService.create(
                     event.ownerId(), event.senderId(),
