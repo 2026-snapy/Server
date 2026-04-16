@@ -254,10 +254,6 @@ public class StoryService {
             throw new CustomException(ErrorCode.CANNOT_LIKE_OWN_STORY);
         }
 
-        if (!storyPhotoRepository.existsByStoryIdAndType(storyId, type)) {
-            throw new CustomException(ErrorCode.STORY_PHOTO_NOT_FOUND);
-        }
-
         Visibility feedVisibility = userSettingRepository.findById(ownerId)
                 .map(UserSetting::getFeedVisibility)
                 .orElse(Visibility.FRIENDS_ONLY);
@@ -271,6 +267,10 @@ public class StoryService {
             if (!isFriend) {
                 throw new CustomException(ErrorCode.ACCESS_DENIED);
             }
+        }
+
+        if (!storyPhotoRepository.existsByStoryIdAndType(storyId, type)) {
+            throw new CustomException(ErrorCode.STORY_PHOTO_NOT_FOUND);
         }
 
         Optional<StoryLike> existing = storyLikeRepository
