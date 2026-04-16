@@ -22,7 +22,9 @@ import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
+import com.gbsw.snapy.domain.notifications.event.StoryLikedEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,7 @@ public class StoryService {
     private final UserRepository userRepository;
     private final PhotoRepository photoRepository;
     private final UserSettingRepository userSettingRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -247,20 +250,22 @@ public class StoryService {
         }
 
         Long ownerId = story.getUserId();
-        if (!ownerId.equals(userId)) {
-            Visibility feedVisibility = userSettingRepository.findById(ownerId)
-                    .map(UserSetting::getFeedVisibility)
-                    .orElse(Visibility.FRIENDS_ONLY);
+        if (ownerId.equals(userId)) {
+            throw new CustomException(ErrorCode.CANNOT_LIKE_OWN_STORY);
+        }
 
-            if (feedVisibility == Visibility.ONLY_ME) {
+        Visibility feedVisibility = userSettingRepository.findById(ownerId)
+                .map(UserSetting::getFeedVisibility)
+                .orElse(Visibility.FRIENDS_ONLY);
+
+        if (feedVisibility == Visibility.ONLY_ME) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        if (feedVisibility == Visibility.FRIENDS_ONLY) {
+            boolean isFriend = friendRepository.existsFriendship(userId, ownerId);
+            if (!isFriend) {
                 throw new CustomException(ErrorCode.ACCESS_DENIED);
-            }
-
-            if (feedVisibility == Visibility.FRIENDS_ONLY) {
-                boolean isFriend = friendRepository.existsFriendship(userId, ownerId);
-                if (!isFriend) {
-                    throw new CustomException(ErrorCode.ACCESS_DENIED);
-                }
             }
         }
 
@@ -278,6 +283,8 @@ public class StoryService {
                             .build()
             );
             liked = true;
+
+            eventPublisher.publishEvent(new StoryLikedEvent(storyId, userId, ownerId));
         }
 
         return new StoryLikeResponse(storyId, liked);
