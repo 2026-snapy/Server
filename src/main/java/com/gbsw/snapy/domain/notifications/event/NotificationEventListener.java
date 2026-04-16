@@ -61,31 +61,33 @@ public class NotificationEventListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleAlbumPublished(AlbumPublishedEvent event) {
-        try {
-            List<Long> friendIds = friendRepository.findFriendIdsByUserId(event.userId());
-            for (Long friendId : friendIds) {
+        List<Long> friendIds = friendRepository.findFriendIdsByUserId(event.userId());
+        for (Long friendId : friendIds) {
+            try {
                 notificationService.create(
                         friendId, event.userId(),
                         NotificationType.ALBUM_PUBLISHED, event.albumId()
                 );
+            } catch (Exception e) {
+                log.warn("앨범 게시 알림 생성 실패 - albumId: {}, friendId: {}",
+                        event.albumId(), friendId, e);
             }
-        } catch (Exception e) {
-            log.warn("앨범 게시 알림 생성 실패 - albumId: {}", event.albumId(), e);
         }
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleNewStory(NewStoryEvent event) {
-        try {
-            List<Long> friendIds = friendRepository.findFriendIdsByUserId(event.userId());
-            for (Long friendId : friendIds) {
+        List<Long> friendIds = friendRepository.findFriendIdsByUserId(event.userId());
+        for (Long friendId : friendIds) {
+            try {
                 notificationService.create(
                         friendId, event.userId(),
                         NotificationType.NEW_STORY, event.storyId()
                 );
+            } catch (Exception e) {
+                log.warn("새 스토리 알림 생성 실패 - storyId: {}, friendId: {}",
+                        event.storyId(), friendId, e);
             }
-        } catch (Exception e) {
-            log.warn("새 스토리 알림 생성 실패 - storyId: {}", event.storyId(), e);
         }
     }
 }
