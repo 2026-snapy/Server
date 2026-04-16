@@ -30,13 +30,15 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
-    public void create(Long receiverId, Long senderId, NotificationType type, Long referenceId) {
+    public void create(Long receiverId, Long senderId, NotificationType type,
+                       Long referenceId, String referenceType) {
         notificationRepository.save(
                 Notification.builder()
                         .receiverId(receiverId)
                         .senderId(senderId)
                         .type(type)
                         .referenceId(referenceId)
+                        .referenceType(referenceType)
                         .read(false)
                         .build()
         );
