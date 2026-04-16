@@ -280,8 +280,7 @@ public class StoryService {
             liked = true;
         }
 
-        long likeCount = storyLikeRepository.countByStoryId(storyId);
-        return new StoryLikeResponse(storyId, liked, likeCount);
+        return new StoryLikeResponse(storyId, liked);
     }
 
     @Transactional(readOnly = true)
