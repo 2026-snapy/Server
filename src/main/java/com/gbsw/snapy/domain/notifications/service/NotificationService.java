@@ -1,5 +1,6 @@
 package com.gbsw.snapy.domain.notifications.service;
 
+import com.gbsw.snapy.domain.notifications.dto.response.NotificationPageResponse;
 import com.gbsw.snapy.domain.notifications.dto.response.NotificationResponse;
 import com.gbsw.snapy.domain.notifications.dto.response.UnreadCountResponse;
 import com.gbsw.snapy.domain.notifications.entity.Notification;
@@ -10,6 +11,9 @@ import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,15 +43,15 @@ public class NotificationService {
     }
 
     @Transactional(readOnly = true)
-    public List<NotificationResponse> getNotifications(Long userId) {
-        List<Notification> notifications = notificationRepository
-                .findByReceiverIdOrderByCreatedAtDesc(userId);
+    public NotificationPageResponse getNotifications(Long userId, Pageable pageable) {
+        Slice<Notification> slice = notificationRepository
+                .findByReceiverIdOrderByCreatedAtDesc(userId, pageable);
 
-        if (notifications.isEmpty()) {
-            return List.of();
+        if (!slice.hasContent()) {
+            return NotificationPageResponse.of(new SliceImpl<>(List.of(), pageable, false));
         }
 
-        List<Long> senderIds = notifications.stream()
+        List<Long> senderIds = slice.getContent().stream()
                 .map(Notification::getSenderId)
                 .distinct()
                 .toList();
@@ -55,10 +59,10 @@ public class NotificationService {
         Map<Long, User> userMap = userRepository.findAllById(senderIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        List<NotificationResponse> result = new ArrayList<>();
-        for (Notification notification : notifications) {
+        List<NotificationResponse> items = new ArrayList<>();
+        for (Notification notification : slice.getContent()) {
             User sender = userMap.get(notification.getSenderId());
-            result.add(NotificationResponse.of(
+            items.add(NotificationResponse.of(
                     notification,
                     sender != null ? sender.getHandle() : null,
                     sender != null ? sender.getUsername() : null,
@@ -66,7 +70,8 @@ public class NotificationService {
             ));
         }
 
-        return result;
+        Slice<NotificationResponse> mapped = new SliceImpl<>(items, pageable, slice.hasNext());
+        return NotificationPageResponse.of(mapped);
     }
 
     @Transactional(readOnly = true)

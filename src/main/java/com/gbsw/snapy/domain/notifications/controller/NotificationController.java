@@ -1,16 +1,16 @@
 package com.gbsw.snapy.domain.notifications.controller;
 
-import com.gbsw.snapy.domain.notifications.dto.response.NotificationResponse;
+import com.gbsw.snapy.domain.notifications.dto.response.NotificationPageResponse;
 import com.gbsw.snapy.domain.notifications.dto.response.UnreadCountResponse;
 import com.gbsw.snapy.domain.notifications.service.NotificationService;
 import com.gbsw.snapy.global.common.ApiResponse;
 import com.gbsw.snapy.global.security.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,10 +20,14 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<NotificationResponse>>> getNotifications(
+    public ResponseEntity<ApiResponse<NotificationPageResponse>> getNotifications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        List<NotificationResponse> response = notificationService.getNotifications(principal.getId());
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), safeSize);
+        NotificationPageResponse response = notificationService.getNotifications(principal.getId(), pageable);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

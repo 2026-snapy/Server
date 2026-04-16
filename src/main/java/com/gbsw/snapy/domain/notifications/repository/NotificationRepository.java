@@ -1,16 +1,16 @@
 package com.gbsw.snapy.domain.notifications.repository;
 
 import com.gbsw.snapy.domain.notifications.entity.Notification;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    List<Notification> findByReceiverIdOrderByCreatedAtDesc(Long receiverId);
+    Slice<Notification> findByReceiverIdOrderByCreatedAtDesc(Long receiverId, Pageable pageable);
 
     long countByReceiverIdAndReadFalse(Long receiverId);
 
