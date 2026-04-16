@@ -22,7 +22,6 @@ import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
-import com.gbsw.snapy.domain.notifications.event.NewStoryEvent;
 import com.gbsw.snapy.domain.notifications.event.StoryLikedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -57,17 +56,13 @@ public class StoryService {
     public Story createStory(Long userId, Long albumId) {
         LocalDateTime nowKst = LocalDateTime.now(KST_ZONE);
 
-        Story story = storyRepository.save(
+        return storyRepository.save(
                 Story.builder()
                         .userId(userId)
                         .albumId(albumId)
                         .expiresAt(nowKst.plusHours(24))
                         .build()
         );
-
-        eventPublisher.publishEvent(new NewStoryEvent(story.getId(), userId));
-
-        return story;
     }
 
     @Transactional

@@ -27,6 +27,7 @@ import com.gbsw.snapy.domain.settings.entity.UserSetting;
 import com.gbsw.snapy.domain.settings.entity.Visibility;
 import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
 import com.gbsw.snapy.domain.notifications.event.AlbumPublishedEvent;
+import com.gbsw.snapy.domain.notifications.event.NewStoryEvent;
 import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -124,15 +126,25 @@ public class AlbumService {
                         .build()
         );
 
+        Optional<Story> existingStory = storyRepository.findByUserIdAndAlbumId(userId, album.getId());
         Story story;
-        try {
-            story = storyRepository.findByUserIdAndAlbumId(userId, album.getId())
-                    .orElseGet(() -> storyService.createStory(userId, album.getId()));
-        } catch (DataIntegrityViolationException e) {
-            story = storyRepository.findByUserIdAndAlbumId(userId, album.getId())
-                    .orElseThrow(() -> e);
+        boolean storyCreated = false;
+        if (existingStory.isPresent()) {
+            story = existingStory.get();
+        } else {
+            try {
+                story = storyService.createStory(userId, album.getId());
+                storyCreated = true;
+            } catch (DataIntegrityViolationException e) {
+                story = storyRepository.findByUserIdAndAlbumId(userId, album.getId())
+                        .orElseThrow(() -> e);
+            }
         }
         storyService.addPhotos(story.getId(), frontPhoto.photoId(), backPhoto.photoId(), request.getType());
+
+        if (storyCreated) {
+            eventPublisher.publishEvent(new NewStoryEvent(story.getId(), userId));
+        }
 
         return AlbumUploadResponse.from(album, request.getType());
     }
