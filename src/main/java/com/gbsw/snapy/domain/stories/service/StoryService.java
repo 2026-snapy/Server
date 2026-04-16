@@ -250,20 +250,22 @@ public class StoryService {
         }
 
         Long ownerId = story.getUserId();
-        if (!ownerId.equals(userId)) {
-            Visibility feedVisibility = userSettingRepository.findById(ownerId)
-                    .map(UserSetting::getFeedVisibility)
-                    .orElse(Visibility.FRIENDS_ONLY);
+        if (ownerId.equals(userId)) {
+            throw new CustomException(ErrorCode.CANNOT_LIKE_OWN_STORY);
+        }
 
-            if (feedVisibility == Visibility.ONLY_ME) {
+        Visibility feedVisibility = userSettingRepository.findById(ownerId)
+                .map(UserSetting::getFeedVisibility)
+                .orElse(Visibility.FRIENDS_ONLY);
+
+        if (feedVisibility == Visibility.ONLY_ME) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        if (feedVisibility == Visibility.FRIENDS_ONLY) {
+            boolean isFriend = friendRepository.existsFriendship(userId, ownerId);
+            if (!isFriend) {
                 throw new CustomException(ErrorCode.ACCESS_DENIED);
-            }
-
-            if (feedVisibility == Visibility.FRIENDS_ONLY) {
-                boolean isFriend = friendRepository.existsFriendship(userId, ownerId);
-                if (!isFriend) {
-                    throw new CustomException(ErrorCode.ACCESS_DENIED);
-                }
             }
         }
 
@@ -282,7 +284,7 @@ public class StoryService {
             );
             liked = true;
 
-            eventPublisher.publishEvent(new StoryLikedEvent(storyId, userId, story.getUserId()));
+            eventPublisher.publishEvent(new StoryLikedEvent(storyId, userId, ownerId));
         }
 
         return new StoryLikeResponse(storyId, liked);
