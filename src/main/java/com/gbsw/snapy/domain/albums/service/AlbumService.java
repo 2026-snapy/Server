@@ -26,9 +26,11 @@ import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.domain.settings.entity.UserSetting;
 import com.gbsw.snapy.domain.settings.entity.Visibility;
 import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
+import com.gbsw.snapy.domain.notifications.event.AlbumPublishedEvent;
 import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -60,6 +62,7 @@ public class AlbumService {
     private final StoryRepository storyRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
+    private final ApplicationEventPublisher eventPublisher;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
     @Transactional
@@ -376,6 +379,8 @@ public class AlbumService {
         }
 
         album.publish();
+
+        eventPublisher.publishEvent(new AlbumPublishedEvent(album.getId(), userId));
 
         return AlbumPublishResponse.from(album);
     }

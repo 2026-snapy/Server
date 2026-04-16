@@ -16,7 +16,10 @@ import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
+import com.gbsw.snapy.domain.notifications.event.FriendAcceptedEvent;
+import com.gbsw.snapy.domain.notifications.event.FriendRequestEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +33,9 @@ public class FriendService {
     private final FriendRequestRepository friendRequestRepository;
     private final FriendRepository friendRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
+    @Transactional
     public void sendRequest(Long senderId, String receiverHandle) {
         User receiver = userRepository.findByHandle(receiverHandle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -47,10 +52,13 @@ public class FriendService {
             throw new CustomException(ErrorCode.FRIEND_REQUEST_ALREADY_SENT);
         }
 
-        friendRequestRepository.save(FriendRequest.builder()
+        FriendRequest savedRequest = friendRequestRepository.save(FriendRequest.builder()
                 .senderId(senderId)
                 .receiverId(receiver.getId())
                 .build());
+
+        eventPublisher.publishEvent(new FriendRequestEvent(
+                savedRequest.getId(), senderId, receiver.getId()));
     }
 
     public FriendRequestStatusResponse getRequestStatus(Long senderId, String receiverHandle) {
@@ -128,6 +136,9 @@ public class FriendService {
             Long userAId = Math.min(request.getSenderId(), request.getReceiverId());
             Long userBId = Math.max(request.getSenderId(), request.getReceiverId());
             friendRepository.save(Friend.builder().id(new FriendId(userAId, userBId)).build());
+
+            eventPublisher.publishEvent(new FriendAcceptedEvent(
+                    request.getSenderId(), receiverId));
         }
 
         friendRequestRepository.delete(request);
