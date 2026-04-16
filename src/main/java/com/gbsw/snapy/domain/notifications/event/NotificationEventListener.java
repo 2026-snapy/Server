@@ -24,10 +24,11 @@ public class NotificationEventListener {
         try {
             notificationService.create(
                     event.ownerId(), event.senderId(),
-                    NotificationType.STORY_LIKE, event.storyId()
+                    NotificationType.STORY_LIKE, event.storyId(), event.type().name()
             );
         } catch (Exception e) {
-            log.warn("스토리 좋아요 알림 생성 실패 - storyId: {}", event.storyId(), e);
+            log.warn("스토리 좋아요 알림 생성 실패 - storyId: {}, type: {}",
+                    event.storyId(), event.type(), e);
         }
     }
 
@@ -36,7 +37,7 @@ public class NotificationEventListener {
         try {
             notificationService.create(
                     event.receiverId(), event.senderId(),
-                    NotificationType.FRIEND_REQUEST, event.requestId()
+                    NotificationType.FRIEND_REQUEST, event.requestId(), null
             );
         } catch (Exception e) {
             log.warn("친구 요청 알림 생성 실패 - requestId: {}", event.requestId(), e);
@@ -48,7 +49,7 @@ public class NotificationEventListener {
         try {
             notificationService.create(
                     event.senderId(), event.receiverId(),
-                    NotificationType.FRIEND_ACCEPTED, null
+                    NotificationType.FRIEND_ACCEPTED, null, null
             );
         } catch (Exception e) {
             log.warn("친구 수락 알림 생성 실패", e);
@@ -62,7 +63,7 @@ public class NotificationEventListener {
             try {
                 notificationService.create(
                         friendId, event.userId(),
-                        NotificationType.ALBUM_PUBLISHED, event.albumId()
+                        NotificationType.ALBUM_PUBLISHED, event.albumId(), null
                 );
             } catch (Exception e) {
                 log.warn("앨범 게시 알림 생성 실패 - albumId: {}, friendId: {}",
@@ -78,7 +79,7 @@ public class NotificationEventListener {
             try {
                 notificationService.create(
                         friendId, event.userId(),
-                        NotificationType.NEW_STORY, event.storyId()
+                        NotificationType.NEW_STORY, event.storyId(), null
                 );
             } catch (Exception e) {
                 log.warn("새 스토리 알림 생성 실패 - storyId: {}, friendId: {}",

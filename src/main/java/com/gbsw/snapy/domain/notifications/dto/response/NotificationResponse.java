@@ -13,6 +13,7 @@ public record NotificationResponse(
         String senderProfileImageUrl,
         NotificationType type,
         Long referenceId,
+        String referenceType,
         boolean read,
         LocalDateTime createdAt
 ) {
@@ -28,6 +29,7 @@ public record NotificationResponse(
                 senderProfileImageUrl,
                 notification.getType(),
                 notification.getReferenceId(),
+                notification.getReferenceType(),
                 notification.isRead(),
                 notification.getCreatedAt()
         );
