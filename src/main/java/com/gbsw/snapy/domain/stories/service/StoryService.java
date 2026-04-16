@@ -305,6 +305,10 @@ public class StoryService {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
+        if (!storyPhotoRepository.existsByStoryIdAndType(storyId, type)) {
+            throw new CustomException(ErrorCode.STORY_PHOTO_NOT_FOUND);
+        }
+
         List<StoryLike> likes = storyLikeRepository
                 .findByStoryIdAndTypeOrderByCreatedAtDesc(storyId, type);
         if (likes.isEmpty()) {
