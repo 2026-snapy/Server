@@ -69,7 +69,7 @@ public class DailyAlbum {
             throw new IllegalArgumentException("증가값은 양수여야 합니다.");
         }
         if (this.photoCount + count > MAX_SET_COUNT) {
-            throw new IllegalStateException("앨범 세트 개수를 초과했습니다. (최대 " + MAX_SET_COUNT + "세트)");
+            throw new CustomException(ErrorCode.ALBUM_DAILY_LIMIT_EXCEEDED);
         }
         this.photoCount += count;
     }
@@ -77,9 +77,6 @@ public class DailyAlbum {
     public void publish() {
         if (this.status == AlbumStatus.PUBLISHED) {
             throw new CustomException(ErrorCode.ALBUM_ALREADY_PUBLISHED);
-        }
-        if (this.photoCount != MAX_SET_COUNT) {
-            throw new CustomException(ErrorCode.ALBUM_NOT_COMPLETED);
         }
         this.status = AlbumStatus.PUBLISHED;
         this.publishedAt = LocalDateTime.now(KST_ZONE);
