@@ -98,7 +98,9 @@ public class AlbumService {
             }
         }
 
-        album.increasePhotoCount(1);
+        if (!publishedAlready) {
+            album.increasePhotoCount(1);
+        }
 
         PhotoUploadResponse frontPhoto = photoService.upload(request.getFrontImage(), userId, PhotoType.FRONT);
         PhotoUploadResponse backPhoto = photoService.upload(request.getBackImage(), userId, PhotoType.BACK);
