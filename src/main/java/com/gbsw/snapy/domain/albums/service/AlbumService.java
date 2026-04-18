@@ -20,6 +20,7 @@ import com.gbsw.snapy.domain.photos.service.PhotoService;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import com.gbsw.snapy.domain.stories.entity.Story;
+import com.gbsw.snapy.domain.stories.repository.StoryPhotoRepository;
 import com.gbsw.snapy.domain.stories.repository.StoryRepository;
 import com.gbsw.snapy.domain.stories.service.StoryService;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
@@ -62,6 +63,7 @@ public class AlbumService {
     private final S3Service s3Service;
     private final StoryService storyService;
     private final StoryRepository storyRepository;
+    private final StoryPhotoRepository storyPhotoRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -83,11 +85,22 @@ public class AlbumService {
                                 .build()
                 ));
 
-        if (albumPhotoRepository.existsByAlbumIdAndType(album.getId(), request.getType())) {
-            throw new CustomException(ErrorCode.DUPLICATE_ALBUM_PHOTO_TYPE);
+        boolean publishedAlready = album.getStatus() == AlbumStatus.PUBLISHED;
+        Optional<Story> existingStory = storyRepository.findByUserIdAndAlbumId(userId, album.getId());
+
+        if (publishedAlready && existingStory.isPresent()) {
+            if (storyPhotoRepository.existsByStoryIdAndType(existingStory.get().getId(), request.getType())) {
+                throw new CustomException(ErrorCode.DUPLICATE_ALBUM_PHOTO_TYPE);
+            }
+        } else {
+            if (albumPhotoRepository.existsByAlbumIdAndType(album.getId(), request.getType())) {
+                throw new CustomException(ErrorCode.DUPLICATE_ALBUM_PHOTO_TYPE);
+            }
         }
 
-        album.increasePhotoCount(1);
+        if (!publishedAlready) {
+            album.increasePhotoCount(1);
+        }
 
         PhotoUploadResponse frontPhoto = photoService.upload(request.getFrontImage(), userId, PhotoType.FRONT);
         PhotoUploadResponse backPhoto = photoService.upload(request.getBackImage(), userId, PhotoType.BACK);
@@ -108,25 +121,26 @@ public class AlbumService {
             }
         });
 
-        albumPhotoRepository.save(
-                AlbumPhoto.builder()
-                        .albumId(album.getId())
-                        .photoId(frontPhoto.photoId())
-                        .type(request.getType())
-                        .side(PhotoType.FRONT)
-                        .build()
-        );
+        if (!publishedAlready) {
+            albumPhotoRepository.save(
+                    AlbumPhoto.builder()
+                            .albumId(album.getId())
+                            .photoId(frontPhoto.photoId())
+                            .type(request.getType())
+                            .side(PhotoType.FRONT)
+                            .build()
+            );
 
-        albumPhotoRepository.save(
-                AlbumPhoto.builder()
-                        .albumId(album.getId())
-                        .photoId(backPhoto.photoId())
-                        .type(request.getType())
-                        .side(PhotoType.BACK)
-                        .build()
-        );
+            albumPhotoRepository.save(
+                    AlbumPhoto.builder()
+                            .albumId(album.getId())
+                            .photoId(backPhoto.photoId())
+                            .type(request.getType())
+                            .side(PhotoType.BACK)
+                            .build()
+            );
+        }
 
-        Optional<Story> existingStory = storyRepository.findByUserIdAndAlbumId(userId, album.getId());
         Story story;
         boolean storyCreated = false;
         if (existingStory.isPresent()) {
@@ -395,6 +409,25 @@ public class AlbumService {
         eventPublisher.publishEvent(new AlbumPublishedEvent(album.getId(), userId));
 
         return AlbumPublishResponse.from(album);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Long> findDraftAlbumIdsBefore(LocalDate date) {
+        return dailyAlbumRepository.findIdsByStatusAndAlbumDateBefore(AlbumStatus.DRAFT, date);
+    }
+
+    @Transactional
+    public void autoPublishOne(Long albumId) {
+        DailyAlbum album = dailyAlbumRepository.findByIdForUpdate(albumId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+
+        if (album.getStatus() == AlbumStatus.PUBLISHED) {
+            return;
+        }
+
+        album.publish();
+
+        eventPublisher.publishEvent(new AlbumPublishedEvent(album.getId(), album.getUserId()));
     }
 
     @Transactional

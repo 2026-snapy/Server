@@ -1,4 +1,6 @@
 package com.gbsw.snapy.domain.notifications.event;
 
-public record StoryLikedEvent(Long storyId, Long senderId, Long ownerId) {
+import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
+
+public record StoryLikedEvent(Long storyId, Long senderId, Long ownerId, AlbumPhotoType type) {
 }

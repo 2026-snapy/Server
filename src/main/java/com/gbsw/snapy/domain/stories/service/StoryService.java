@@ -240,7 +240,7 @@ public class StoryService {
     }
 
     @Transactional
-    public StoryLikeResponse toggleLike(Long storyId, Long userId) {
+    public StoryLikeResponse toggleLike(Long storyId, AlbumPhotoType type, Long userId) {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORY_NOT_FOUND));
 
@@ -269,7 +269,12 @@ public class StoryService {
             }
         }
 
-        Optional<StoryLike> existing = storyLikeRepository.findByStoryIdAndUserId(storyId, userId);
+        if (!storyPhotoRepository.existsByStoryIdAndType(storyId, type)) {
+            throw new CustomException(ErrorCode.STORY_PHOTO_NOT_FOUND);
+        }
+
+        Optional<StoryLike> existing = storyLikeRepository
+                .findByStoryIdAndUserIdAndType(storyId, userId, type);
 
         boolean liked;
         if (existing.isPresent()) {
@@ -280,18 +285,19 @@ public class StoryService {
                     StoryLike.builder()
                             .storyId(storyId)
                             .userId(userId)
+                            .type(type)
                             .build()
             );
             liked = true;
 
-            eventPublisher.publishEvent(new StoryLikedEvent(storyId, userId, ownerId));
+            eventPublisher.publishEvent(new StoryLikedEvent(storyId, userId, ownerId, type));
         }
 
-        return new StoryLikeResponse(storyId, liked);
+        return new StoryLikeResponse(storyId, type, liked);
     }
 
     @Transactional(readOnly = true)
-    public List<StoryLikeListResponse> getLikes(Long storyId, Long userId) {
+    public List<StoryLikeListResponse> getLikes(Long storyId, AlbumPhotoType type, Long userId) {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.STORY_NOT_FOUND));
 
@@ -299,7 +305,12 @@ public class StoryService {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
-        List<StoryLike> likes = storyLikeRepository.findByStoryIdOrderByCreatedAtDesc(storyId);
+        if (!storyPhotoRepository.existsByStoryIdAndType(storyId, type)) {
+            throw new CustomException(ErrorCode.STORY_PHOTO_NOT_FOUND);
+        }
+
+        List<StoryLike> likes = storyLikeRepository
+                .findByStoryIdAndTypeOrderByCreatedAtDesc(storyId, type);
         if (likes.isEmpty()) {
             return List.of();
         }

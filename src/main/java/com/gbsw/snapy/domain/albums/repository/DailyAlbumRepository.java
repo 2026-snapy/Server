@@ -1,5 +1,6 @@
 package com.gbsw.snapy.domain.albums.repository;
 
+import com.gbsw.snapy.domain.albums.entity.AlbumStatus;
 import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,4 +24,10 @@ public interface DailyAlbumRepository extends JpaRepository<DailyAlbum, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select a from DailyAlbum a where a.id = :id")
     Optional<DailyAlbum> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("select a.id from DailyAlbum a where a.status = :status and a.albumDate < :date")
+    List<Long> findIdsByStatusAndAlbumDateBefore(
+            @Param("status") AlbumStatus status,
+            @Param("date") LocalDate date
+    );
 }

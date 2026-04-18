@@ -1,5 +1,6 @@
 package com.gbsw.snapy.domain.stories.controller;
 
+import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
 import com.gbsw.snapy.domain.stories.dto.response.StoryDetailResponse;
 import com.gbsw.snapy.domain.stories.dto.response.StoryLikeListResponse;
 import com.gbsw.snapy.domain.stories.dto.response.StoryLikeResponse;
@@ -38,21 +39,23 @@ public class StoryController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PostMapping("/{storyId}/likes")
+    @PostMapping("/{storyId}/photos/{type}/likes")
     public ResponseEntity<ApiResponse<StoryLikeResponse>> toggleLike(
             @PathVariable Long storyId,
+            @PathVariable AlbumPhotoType type,
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        StoryLikeResponse response = storyService.toggleLike(storyId, principal.getId());
+        StoryLikeResponse response = storyService.toggleLike(storyId, type, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @GetMapping("/{storyId}/likes")
+    @GetMapping("/{storyId}/photos/{type}/likes")
     public ResponseEntity<ApiResponse<List<StoryLikeListResponse>>> getLikes(
             @PathVariable Long storyId,
+            @PathVariable AlbumPhotoType type,
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        List<StoryLikeListResponse> response = storyService.getLikes(storyId, principal.getId());
+        List<StoryLikeListResponse> response = storyService.getLikes(storyId, type, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
