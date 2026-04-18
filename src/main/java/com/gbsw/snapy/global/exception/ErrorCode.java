@@ -52,7 +52,7 @@ public enum ErrorCode {
     DUPLICATE_ALBUM_PHOTO_TYPE(HttpStatus.CONFLICT, "해당 시간대에 이미 사진이 등록되어 있습니다."),
     INVALID_ALBUM_PHOTO_TIME_SLOT(HttpStatus.BAD_REQUEST, "현재 시간대에 업로드할 수 없는 사진 타입입니다."),
     INVALID_MONTH(HttpStatus.BAD_REQUEST, "유효하지 않은 월입니다. (1~12)"),
-    ALBUM_NOT_COMPLETED(HttpStatus.BAD_REQUEST, "5장을 모두 채운 후에 게시할 수 있습니다."),
+    ALBUM_DAILY_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "하루 업로드 한도(5장)를 초과했습니다."),
     ALBUM_ALREADY_PUBLISHED(HttpStatus.CONFLICT, "이미 게시된 앨범입니다."),
 
     // Story
