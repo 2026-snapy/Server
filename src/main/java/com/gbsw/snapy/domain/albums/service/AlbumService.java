@@ -83,6 +83,9 @@ public class AlbumService {
                                 .build()
                 ));
 
+        album = dailyAlbumRepository.findByIdForUpdate(album.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+
         boolean publishedAlready = album.getStatus() == AlbumStatus.PUBLISHED;
         Optional<Story> existingStory = storyRepository.findByUserIdAndAlbumId(userId, album.getId());
 
