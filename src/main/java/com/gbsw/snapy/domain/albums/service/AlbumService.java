@@ -72,9 +72,7 @@ public class AlbumService {
     @Transactional
     public AlbumUploadResponse upload(AlbumUploadRequest request, Long userId) {
         ZonedDateTime nowKst = ZonedDateTime.now(KST_ZONE);
-        if (!request.getType().matches(nowKst.getHour())) {
-            throw new CustomException(ErrorCode.INVALID_ALBUM_PHOTO_TIME_SLOT);
-        }
+        int hour = nowKst.getHour();
 
         LocalDate today = nowKst.toLocalDate();
         DailyAlbum album = dailyAlbumRepository.findByUserIdAndAlbumDate(userId, today)
@@ -85,15 +83,23 @@ public class AlbumService {
                                 .build()
                 ));
 
+        album = dailyAlbumRepository.findByIdForUpdate(album.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+
         boolean publishedAlready = album.getStatus() == AlbumStatus.PUBLISHED;
         Optional<Story> existingStory = storyRepository.findByUserIdAndAlbumId(userId, album.getId());
 
+        AlbumPhotoType resolvedType = request.getType();
+        if (!resolvedType.matches(hour)) {
+            resolvedType = findAvailableFreeSlot(album.getId(), publishedAlready, existingStory);
+        }
+
         if (publishedAlready && existingStory.isPresent()) {
-            if (storyPhotoRepository.existsByStoryIdAndType(existingStory.get().getId(), request.getType())) {
+            if (storyPhotoRepository.existsByStoryIdAndType(existingStory.get().getId(), resolvedType)) {
                 throw new CustomException(ErrorCode.DUPLICATE_ALBUM_PHOTO_TYPE);
             }
         } else {
-            if (albumPhotoRepository.existsByAlbumIdAndType(album.getId(), request.getType())) {
+            if (albumPhotoRepository.existsByAlbumIdAndType(album.getId(), resolvedType)) {
                 throw new CustomException(ErrorCode.DUPLICATE_ALBUM_PHOTO_TYPE);
             }
         }
@@ -126,7 +132,7 @@ public class AlbumService {
                     AlbumPhoto.builder()
                             .albumId(album.getId())
                             .photoId(frontPhoto.photoId())
-                            .type(request.getType())
+                            .type(resolvedType)
                             .side(PhotoType.FRONT)
                             .build()
             );
@@ -135,7 +141,7 @@ public class AlbumService {
                     AlbumPhoto.builder()
                             .albumId(album.getId())
                             .photoId(backPhoto.photoId())
-                            .type(request.getType())
+                            .type(resolvedType)
                             .side(PhotoType.BACK)
                             .build()
             );
@@ -154,13 +160,26 @@ public class AlbumService {
                         .orElseThrow(() -> e);
             }
         }
-        storyService.addPhotos(story.getId(), frontPhoto.photoId(), backPhoto.photoId(), request.getType());
+        storyService.addPhotos(story.getId(), frontPhoto.photoId(), backPhoto.photoId(), resolvedType);
 
         if (storyCreated) {
             eventPublisher.publishEvent(new NewStoryEvent(story.getId(), userId));
         }
 
-        return AlbumUploadResponse.from(album, request.getType());
+        return AlbumUploadResponse.from(album, resolvedType);
+    }
+
+    private AlbumPhotoType findAvailableFreeSlot(Long albumId, boolean publishedAlready,
+                                                 Optional<Story> existingStory) {
+        for (AlbumPhotoType free : List.of(AlbumPhotoType.FREE_1, AlbumPhotoType.FREE_2)) {
+            boolean taken = (publishedAlready && existingStory.isPresent())
+                    ? storyPhotoRepository.existsByStoryIdAndType(existingStory.get().getId(), free)
+                    : albumPhotoRepository.existsByAlbumIdAndType(albumId, free);
+            if (!taken) {
+                return free;
+            }
+        }
+        throw new CustomException(ErrorCode.INVALID_ALBUM_PHOTO_TIME_SLOT);
     }
 
     @Transactional(readOnly = true)
