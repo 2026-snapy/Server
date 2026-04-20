@@ -11,6 +11,10 @@ services:
       SPRING_PROFILES_ACTIVE: deploy
       SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/snapy?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       SPRING_CLOUD_AWS_REGION_STATIC: ap-northeast-2
+      SPRING_JPA_SHOW_SQL: "false"
+      SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL: "false"
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: WARN
+      LOGGING_LEVEL_ORG_HIBERNATE_ORM_JDBC_BIND: WARN
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
