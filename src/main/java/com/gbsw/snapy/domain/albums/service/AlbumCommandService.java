@@ -17,7 +17,6 @@ import com.gbsw.snapy.domain.photos.entity.PhotoType;
 import com.gbsw.snapy.domain.photos.repository.PhotoRepository;
 import com.gbsw.snapy.domain.photos.service.PhotoService;
 import com.gbsw.snapy.domain.stories.entity.Story;
-import com.gbsw.snapy.domain.stories.repository.StoryPhotoRepository;
 import com.gbsw.snapy.domain.stories.repository.StoryRepository;
 import com.gbsw.snapy.domain.stories.service.StoryService;
 import com.gbsw.snapy.global.exception.CustomException;
@@ -50,7 +49,6 @@ public class AlbumCommandService {
     private final S3Service s3Service;
     private final StoryService storyService;
     private final StoryRepository storyRepository;
-    private final StoryPhotoRepository storyPhotoRepository;
     private final ApplicationEventPublisher eventPublisher;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
@@ -71,27 +69,16 @@ public class AlbumCommandService {
         album = dailyAlbumRepository.findByIdForUpdate(album.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
 
-        boolean publishedAlready = album.getStatus() == AlbumStatus.PUBLISHED;
-        Optional<Story> existingStory = storyRepository.findByUserIdAndAlbumId(userId, album.getId());
-
         AlbumPhotoType resolvedType = request.getType();
         if (!resolvedType.matches(hour)) {
-            resolvedType = findAvailableFreeSlot(album.getId(), publishedAlready, existingStory);
+            resolvedType = findAvailableFreeSlot(album.getId());
         }
 
-        if (publishedAlready && existingStory.isPresent()) {
-            if (storyPhotoRepository.existsByStoryIdAndType(existingStory.get().getId(), resolvedType)) {
-                throw new CustomException(ErrorCode.DUPLICATE_ALBUM_PHOTO_TYPE);
-            }
-        } else {
-            if (albumPhotoRepository.existsByAlbumIdAndType(album.getId(), resolvedType)) {
-                throw new CustomException(ErrorCode.DUPLICATE_ALBUM_PHOTO_TYPE);
-            }
+        if (albumPhotoRepository.existsByAlbumIdAndType(album.getId(), resolvedType)) {
+            throw new CustomException(ErrorCode.DUPLICATE_ALBUM_PHOTO_TYPE);
         }
 
-        if (!publishedAlready) {
-            album.increasePhotoCount(1);
-        }
+        album.increasePhotoCount(1);
 
         PhotoUploadResponse frontPhoto = photoService.upload(request.getFrontImage(), userId, PhotoType.FRONT);
         PhotoUploadResponse backPhoto = photoService.upload(request.getBackImage(), userId, PhotoType.BACK);
@@ -112,26 +99,25 @@ public class AlbumCommandService {
             }
         });
 
-        if (!publishedAlready) {
-            albumPhotoRepository.save(
-                    AlbumPhoto.builder()
-                            .albumId(album.getId())
-                            .photoId(frontPhoto.photoId())
-                            .type(resolvedType)
-                            .side(PhotoType.FRONT)
-                            .build()
-            );
+        albumPhotoRepository.save(
+                AlbumPhoto.builder()
+                        .albumId(album.getId())
+                        .photoId(frontPhoto.photoId())
+                        .type(resolvedType)
+                        .side(PhotoType.FRONT)
+                        .build()
+        );
 
-            albumPhotoRepository.save(
-                    AlbumPhoto.builder()
-                            .albumId(album.getId())
-                            .photoId(backPhoto.photoId())
-                            .type(resolvedType)
-                            .side(PhotoType.BACK)
-                            .build()
-            );
-        }
+        albumPhotoRepository.save(
+                AlbumPhoto.builder()
+                        .albumId(album.getId())
+                        .photoId(backPhoto.photoId())
+                        .type(resolvedType)
+                        .side(PhotoType.BACK)
+                        .build()
+        );
 
+        Optional<Story> existingStory = storyRepository.findByUserIdAndAlbumId(userId, album.getId());
         Story story;
         boolean storyCreated = false;
         if (existingStory.isPresent()) {
@@ -154,13 +140,9 @@ public class AlbumCommandService {
         return AlbumUploadResponse.from(album, resolvedType);
     }
 
-    private AlbumPhotoType findAvailableFreeSlot(Long albumId, boolean publishedAlready,
-                                                 Optional<Story> existingStory) {
+    private AlbumPhotoType findAvailableFreeSlot(Long albumId) {
         for (AlbumPhotoType free : List.of(AlbumPhotoType.FREE_1, AlbumPhotoType.FREE_2)) {
-            boolean taken = (publishedAlready && existingStory.isPresent())
-                    ? storyPhotoRepository.existsByStoryIdAndType(existingStory.get().getId(), free)
-                    : albumPhotoRepository.existsByAlbumIdAndType(albumId, free);
-            if (!taken) {
+            if (!albumPhotoRepository.existsByAlbumIdAndType(albumId, free)) {
                 return free;
             }
         }

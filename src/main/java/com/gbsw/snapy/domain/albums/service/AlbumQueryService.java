@@ -52,7 +52,7 @@ public class AlbumQueryService {
             return null;
         }
 
-        List<PhotoSetView> sets = loadPhotoSets(album.getId());
+        List<PhotoSetView> sets = loadPhotoSets(album.getId(), null);
         List<AlbumTodayResponse.AlbumPhotoSet> mapped = sets.stream()
                 .map(s -> new AlbumTodayResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl(), s.createdAt()))
                 .toList();
@@ -75,23 +75,21 @@ public class AlbumQueryService {
 
             UserSetting setting = userSettingRepository.findById(album.getUserId()).orElse(null);
 
+            Visibility v;
             if (isCurrentMonth) {
-                Visibility v = (setting != null) ? setting.getFeedVisibility() : Visibility.FRIENDS_ONLY;
-                if (v == Visibility.FRIENDS_ONLY && !friendRepository.existsFriendship(userId, album.getUserId())) {
-                    throw new CustomException(ErrorCode.ACCESS_DENIED);
-                }
+                v = (setting != null) ? setting.getFeedVisibility() : Visibility.FRIENDS_ONLY;
             } else {
-                Visibility v = (setting != null) ? setting.getPastAlbumVisibility() : Visibility.FRIENDS_ONLY;
+                v = (setting != null) ? setting.getPastAlbumVisibility() : Visibility.FRIENDS_ONLY;
                 if (v == Visibility.ONLY_ME) {
                     throw new CustomException(ErrorCode.ACCESS_DENIED);
                 }
-                if (v == Visibility.FRIENDS_ONLY && !friendRepository.existsFriendship(userId, album.getUserId())) {
-                    throw new CustomException(ErrorCode.ACCESS_DENIED);
-                }
+            }
+            if (v == Visibility.FRIENDS_ONLY && !friendRepository.existsFriendship(userId, album.getUserId())) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
             }
         }
 
-        List<PhotoSetView> sets = loadPhotoSets(album.getId());
+        List<PhotoSetView> sets = loadPhotoSets(album.getId(), album.getPublishedAt());
         List<AlbumDetailResponse.AlbumPhotoSet> mapped = sets.stream()
                 .map(s -> new AlbumDetailResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl(), s.createdAt()))
                 .toList();
@@ -198,8 +196,10 @@ public class AlbumQueryService {
         return result;
     }
 
-    private List<PhotoSetView> loadPhotoSets(Long albumId) {
-        List<AlbumPhoto> albumPhotos = albumPhotoRepository.findByAlbumIdOrderByTypeAsc(albumId);
+    private List<PhotoSetView> loadPhotoSets(Long albumId, LocalDateTime snapshotBoundary) {
+        List<AlbumPhoto> albumPhotos = (snapshotBoundary == null)
+                ? albumPhotoRepository.findByAlbumIdOrderByTypeAsc(albumId)
+                : albumPhotoRepository.findByAlbumIdAndCreatedAtLessThanEqualOrderByTypeAsc(albumId, snapshotBoundary);
         if (albumPhotos.isEmpty()) {
             return List.of();
         }
