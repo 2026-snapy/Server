@@ -4,6 +4,7 @@ import com.gbsw.snapy.domain.friends.dto.response.FriendResponse;
 import com.gbsw.snapy.domain.friends.service.FriendService;
 import com.gbsw.snapy.domain.guestbook.dto.request.GuestBookCreateRequest;
 import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookCreateResponse;
+import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookResponse;
 import com.gbsw.snapy.domain.guestbook.service.GuestBookService;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
@@ -78,6 +79,14 @@ public class UserController {
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         GuestBookCreateResponse response = guestBookService.create(handle, request, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{handle}/guestbook")
+    public ResponseEntity<ApiResponse<List<GuestBookResponse>>> getGuestBook(
+            @PathVariable String handle
+    ) {
+        List<GuestBookResponse> response = guestBookService.getGuestBook(handle);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

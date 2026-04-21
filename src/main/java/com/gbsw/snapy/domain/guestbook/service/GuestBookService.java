@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.guestbook.service;
 
 import com.gbsw.snapy.domain.guestbook.dto.request.GuestBookCreateRequest;
 import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookCreateResponse;
+import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookResponse;
 import com.gbsw.snapy.domain.guestbook.entity.GuestBook;
 import com.gbsw.snapy.domain.guestbook.entity.GuestBookId;
 import com.gbsw.snapy.domain.guestbook.repository.GuestBookRepository;
@@ -13,6 +14,8 @@ import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -51,5 +54,16 @@ public class GuestBookService {
         GuestBook saved = guestBookRepository.saveAndFlush(guestBook);
 
         return GuestBookCreateResponse.from(saved);
+    }
+
+    // TODO: 추후 MVP 개발이 끝난 후 페이지네이션으로 변경 필요
+    @Transactional(readOnly = true)
+    public List<GuestBookResponse> getGuestBook(String ownerHandle) {
+        User owner = userRepository.findByHandle(ownerHandle)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        return guestBookRepository.findByOwnerId(owner.getId()).stream()
+                .map(GuestBookResponse::from)
+                .toList();
     }
 }
