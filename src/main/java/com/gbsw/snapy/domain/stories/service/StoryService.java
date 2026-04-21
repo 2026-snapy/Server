@@ -90,13 +90,12 @@ public class StoryService {
     @Transactional(readOnly = true)
     public List<StoryListResponse> getStories(Long userId) {
         List<Long> friendIds = friendRepository.findFriendIdsByUserId(userId);
-        if (friendIds.isEmpty()) {
-            return List.of();
-        }
+        List<Long> targetIds = new ArrayList<>(friendIds);
+        targetIds.add(userId);
 
         LocalDateTime nowKst = LocalDateTime.now(KST_ZONE);
         List<Story> stories = storyRepository
-                .findByUserIdInAndExpiresAtAfterOrderByCreatedAtDesc(friendIds, nowKst);
+                .findByUserIdInAndExpiresAtAfterOrderByCreatedAtDesc(targetIds, nowKst);
 
         if (stories.isEmpty()) {
             return List.of();
@@ -108,7 +107,14 @@ public class StoryService {
                 .collect(Collectors.toMap(UserSetting::getUserId, UserSetting::getFeedVisibility));
 
         stories = stories.stream()
-                .filter(story -> visibilityMap.getOrDefault(story.getUserId(), Visibility.FRIENDS_ONLY) != Visibility.ONLY_ME)
+                .filter(story -> story.getUserId().equals(userId)
+                        || visibilityMap.getOrDefault(story.getUserId(), Visibility.FRIENDS_ONLY) != Visibility.ONLY_ME)
+                .sorted((a, b) -> {
+                    boolean aOwn = a.getUserId().equals(userId);
+                    boolean bOwn = b.getUserId().equals(userId);
+                    if (aOwn != bOwn) return aOwn ? -1 : 1;
+                    return b.getCreatedAt().compareTo(a.getCreatedAt());
+                })
                 .toList();
 
         if (stories.isEmpty()) {
