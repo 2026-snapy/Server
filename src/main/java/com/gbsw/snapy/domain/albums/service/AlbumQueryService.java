@@ -89,7 +89,8 @@ public class AlbumQueryService {
             }
         }
 
-        List<PhotoSetView> sets = loadPhotoSets(album.getId(), album.getPublishedAt());
+        LocalDateTime snapshotBoundary = album.getUserId().equals(userId) ? null : album.getPublishedAt();
+        List<PhotoSetView> sets = loadPhotoSets(album.getId(), snapshotBoundary);
         List<AlbumDetailResponse.AlbumPhotoSet> mapped = sets.stream()
                 .map(s -> new AlbumDetailResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl(), s.createdAt()))
                 .toList();
