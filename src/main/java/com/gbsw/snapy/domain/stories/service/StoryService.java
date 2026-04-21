@@ -222,7 +222,7 @@ public class StoryService {
 
                 if (sp.getSide() == PhotoType.FRONT) {
                     frontUrl = photo.getImageUrl();
-                    photoCreatedAt = sp.getCreatedAt();
+                    photoCreatedAt = photo.getCreatedAt();
                 } else {
                     backUrl = photo.getImageUrl();
                 }
