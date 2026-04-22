@@ -2,6 +2,10 @@ package com.gbsw.snapy.domain.users.controller;
 
 import com.gbsw.snapy.domain.friends.dto.response.FriendResponse;
 import com.gbsw.snapy.domain.friends.service.FriendService;
+import com.gbsw.snapy.domain.guestbook.dto.request.GuestBookCreateRequest;
+import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookCreateResponse;
+import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookResponse;
+import com.gbsw.snapy.domain.guestbook.service.GuestBookService;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
@@ -24,6 +28,7 @@ public class UserController {
 
     private final UserService userService;
     private final FriendService friendService;
+    private final GuestBookService guestBookService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserSearchResponse>>> searchUsers(
@@ -64,6 +69,24 @@ public class UserController {
             @PathVariable String handle
     ) {
         UserProfileResponse response = userService.getProfile(handle);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PostMapping("/{handle}/guestbook")
+    public ResponseEntity<ApiResponse<GuestBookCreateResponse>> createGuestBook(
+            @PathVariable String handle,
+            @ModelAttribute GuestBookCreateRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        GuestBookCreateResponse response = guestBookService.create(handle, request, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{handle}/guestbook")
+    public ResponseEntity<ApiResponse<List<GuestBookResponse>>> getGuestBook(
+            @PathVariable String handle
+    ) {
+        List<GuestBookResponse> response = guestBookService.getGuestBook(handle);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
