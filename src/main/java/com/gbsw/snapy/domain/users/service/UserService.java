@@ -31,6 +31,10 @@ public class UserService {
         return UserProfileResponse.from(user, friendCount);
     }
 
+//    public getGuestBook() {
+//
+//    }
+
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
