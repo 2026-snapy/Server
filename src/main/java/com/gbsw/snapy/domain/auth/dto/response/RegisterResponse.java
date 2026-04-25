@@ -9,7 +9,6 @@ import lombok.Getter;
 public class RegisterResponse {
     private String handle;
     private String username;
-    private String email;
 
     public static RegisterResponse from(User user) {
         return RegisterResponse.builder()
