@@ -34,3 +34,11 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: alpha
 
+google:
+  oauth:
+    web:
+      redirect-uri: http://localhost:8080/auth/google/callback
+
+frontend:
+  url: http://localhost:5173
+
