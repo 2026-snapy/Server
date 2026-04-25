@@ -1,5 +1,6 @@
 package com.gbsw.snapy.domain.users.service;
 
+import com.gbsw.snapy.domain.users.dto.request.UpdatePhoneRequest;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
@@ -92,6 +93,16 @@ public class UserService {
         userRepository.save(user);
 
         return UpdateProfileImageResponse.from(user);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void updatePhone(Long userId, UpdatePhoneRequest dto) {
+        if (userRepository.existsByPhone(dto.getPhone())) {
+            throw new CustomException(ErrorCode.DUPLICATE_PHONE);
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        user.setPhone(dto.getPhone());
     }
 
     public List<UserSearchResponse> searchUsers(String q) {

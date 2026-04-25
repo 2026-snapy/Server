@@ -80,6 +80,9 @@ public enum ErrorCode {
     GUEST_BOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "방명록을 찾을 수 없습니다."),
     DUPLICATE_GUEST_BOOK(HttpStatus.CONFLICT, "이미 방명록을 작성했습니다."),
 
+    // Phone
+    PHONE_NOT_REGISTERED(HttpStatus.FORBIDDEN, "휴대폰 번호를 등록해야 이용할 수 있습니다."),
+
     // OAuth
     GOOGLE_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "Google 로그인에 실패했습니다.");
 

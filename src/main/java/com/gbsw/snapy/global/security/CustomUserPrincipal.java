@@ -13,11 +13,17 @@ public class CustomUserPrincipal implements UserDetails {
     private final Long id;
     private final String username;
     private final String password;
+    private final String phone;
 
-    public CustomUserPrincipal(Long id, String username, String password) {
+    public CustomUserPrincipal(Long id, String username, String password, String phone) {
         this.id = id;
         this.username = username;
         this.password = password;
+        this.phone = phone;
+    }
+
+    public boolean hasPhone() {
+        return phone != null && !phone.isBlank();
     }
 
     @Override
