@@ -1,5 +1,6 @@
 package com.gbsw.snapy.domain.users.entity;
 
+import com.gbsw.snapy.domain.auth.entity.OAuthProvider;
 import com.gbsw.snapy.domain.auth.entity.RefreshToken;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -32,11 +33,18 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String phone;
 
-    @Column(nullable = false)
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private OAuthProvider provider = OAuthProvider.LOCAL;
+
+    @Column(name = "provider_id")
+    private String providerId;
 
     @Column(name = "background_image_url")
     private String backGroundImageUrl;
