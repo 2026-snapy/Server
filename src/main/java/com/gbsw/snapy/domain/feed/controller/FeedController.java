@@ -1,7 +1,7 @@
 package com.gbsw.snapy.domain.feed.controller;
 
-import com.gbsw.snapy.domain.albums.dto.response.AlbumDetailResponse;
 import com.gbsw.snapy.domain.feed.dto.request.FeedRecommendRequest;
+import com.gbsw.snapy.domain.feed.dto.response.FeedItemResponse;
 import com.gbsw.snapy.domain.feed.service.FeedService;
 import com.gbsw.snapy.global.common.ApiResponse;
 import com.gbsw.snapy.global.common.CursorResponse;
@@ -21,7 +21,7 @@ public class FeedController {
     private final FeedService feedService;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<CursorResponse<AlbumDetailResponse>>> recommend(
+    public ResponseEntity<ApiResponse<CursorResponse<FeedItemResponse>>> recommend(
             @Valid FeedRecommendRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal
             ) {
