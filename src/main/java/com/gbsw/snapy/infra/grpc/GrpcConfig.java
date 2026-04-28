@@ -24,7 +24,7 @@ public class GrpcConfig {
     }
 
     @Bean
-    public RecommendServiceGrpc.RecommendServiceBlockingStub recommendStub(ManagedChannel recommendChannel) {
-        return RecommendServiceGrpc.newBlockingStub(recommendChannel);
+    public RecommendServiceGrpc.RecommendServiceBlockingStub recommendStub(ManagedChannel grpcServerChannel) {
+        return RecommendServiceGrpc.newBlockingStub(grpcServerChannel);
     }
 }
