@@ -7,4 +7,10 @@ public record FeedRecommendRequest(
         @Min(1) Long cursor,
         @Min(1) @Max(100) Integer size
 ) {
+
+    public FeedRecommendRequest {
+        if (size == null) {
+            size = 20;
+        }
+    }
 }
