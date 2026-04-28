@@ -104,6 +104,8 @@ jobs:
             JWT_SECRET_KEY=${JWT_SECRET_KEY}
             SNAPY_S3_BUCKET=${S3_BUCKET}
             SNAPY_CLOUDFRONT_URL=${CLOUDFRONT_URL}
+            GRPC_SERVER_HOST=${GRPC_SERVER_HOST}
+            GRPC_SERVER_PORT=${GRPC_SERVER_PORT}
             EOF
 
             # GHCR 로그인
