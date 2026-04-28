@@ -37,6 +37,7 @@ dependencies {
   implementation 'io.grpc:grpc-stub:1.63.0'
   implementation 'io.grpc:grpc-protobuf:1.63.0'
   implementation 'io.grpc:grpc-netty-shaded:1.63.0'
+  implementation 'com.google.protobuf:protobuf-java:3.25.5'
   runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
   runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
   compileOnly 'org.projectlombok:lombok'
