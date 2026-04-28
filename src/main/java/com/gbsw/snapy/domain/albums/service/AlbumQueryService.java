@@ -197,7 +197,7 @@ public class AlbumQueryService {
         return result;
     }
 
-    private List<PhotoSetView> loadPhotoSets(Long albumId, LocalDateTime snapshotBoundary) {
+    public List<PhotoSetView> loadPhotoSets(Long albumId, LocalDateTime snapshotBoundary) {
         List<AlbumPhoto> albumPhotos = (snapshotBoundary == null)
                 ? albumPhotoRepository.findByAlbumIdOrderByTypeAsc(albumId)
                 : albumPhotoRepository.findByAlbumIdAndCreatedAtLessThanEqualOrderByTypeAsc(albumId, snapshotBoundary);
@@ -237,7 +237,7 @@ public class AlbumQueryService {
         return sets;
     }
 
-    private record PhotoSetView(AlbumPhotoType type, String frontImageUrl, String backImageUrl,
+    public record PhotoSetView(AlbumPhotoType type, String frontImageUrl, String backImageUrl,
                                 LocalDateTime createdAt) {
     }
 }
