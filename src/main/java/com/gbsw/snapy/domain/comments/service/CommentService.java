@@ -14,6 +14,7 @@ import com.gbsw.snapy.domain.comments.entity.Comment;
 import com.gbsw.snapy.domain.comments.entity.CommentAttachment;
 import com.gbsw.snapy.domain.comments.repository.CommentAttachmentRepository;
 import com.gbsw.snapy.domain.comments.repository.CommentRepository;
+import com.gbsw.snapy.domain.notifications.event.FeedCommentEvent;
 import com.gbsw.snapy.domain.photos.dto.response.PhotoUploadResponse;
 import com.gbsw.snapy.domain.photos.entity.Photo;
 import com.gbsw.snapy.domain.photos.entity.PhotoType;
@@ -25,6 +26,7 @@ import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,7 @@ public class CommentService {
     private final DailyAlbumRepository dailyAlbumRepository;
     private final PhotoRepository photoRepository;
     private final AudioRepository audioRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public CommentUploadResponse upload(Long albumId, Long userId, CommentUploadRequest request) {
@@ -88,6 +91,11 @@ public class CommentService {
                         .attachment(savedAttachment)
                         .build()
         );
+
+        if (!album.getUserId().equals(userId)) {
+            eventPublisher.publishEvent(new FeedCommentEvent(
+                    comment.getId(), album.getId(), userId, album.getUserId()));
+        }
 
         return CommentUploadResponse.from(comment);
     }

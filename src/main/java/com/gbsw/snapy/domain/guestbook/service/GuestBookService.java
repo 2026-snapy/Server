@@ -6,12 +6,14 @@ import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookResponse;
 import com.gbsw.snapy.domain.guestbook.entity.GuestBook;
 import com.gbsw.snapy.domain.guestbook.entity.GuestBookId;
 import com.gbsw.snapy.domain.guestbook.repository.GuestBookRepository;
+import com.gbsw.snapy.domain.notifications.event.GuestbookCreatedEvent;
 import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class GuestBookService {
     private final GuestBookRepository guestBookRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public GuestBookCreateResponse create(String ownerHandle, GuestBookCreateRequest request, Long authorId) {
@@ -52,6 +55,8 @@ public class GuestBookService {
                 .build();
 
         GuestBook saved = guestBookRepository.saveAndFlush(guestBook);
+
+        eventPublisher.publishEvent(new GuestbookCreatedEvent(owner.getId(), authorId));
 
         return GuestBookCreateResponse.from(saved);
     }
