@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.users.repository;
 
 import com.gbsw.snapy.domain.users.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,4 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByHandle(String handle);
     List<User> findTop10ByPhoneIn(List<String> phones);
     List<User> findByHandleContainingIgnoreCaseOrUsernameContainingIgnoreCase(String handle, String username);
+
+    @Query("select u.id from User u")
+    List<Long> findAllIds();
 }
