@@ -33,6 +33,31 @@ public class NotificationEventListener {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleFeedComment(FeedCommentEvent event) {
+        try {
+            notificationService.create(
+                    event.ownerId(), event.senderId(),
+                    NotificationType.FEED_COMMENT, event.commentId(), String.valueOf(event.albumId())
+            );
+        } catch (Exception e) {
+            log.warn("피드 댓글 알림 생성 실패 - commentId: {}, albumId: {}",
+                    event.commentId(), event.albumId(), e);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleGuestbookCreated(GuestbookCreatedEvent event) {
+        try {
+            notificationService.create(
+                    event.ownerId(), event.senderId(),
+                    NotificationType.GUESTBOOK_CREATED, event.guestbookId(), null
+            );
+        } catch (Exception e) {
+            log.warn("방명록 알림 생성 실패 - guestbookId: {}", event.guestbookId(), e);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFriendRequest(FriendRequestEvent event) {
         try {
             notificationService.create(
