@@ -49,11 +49,12 @@ public class NotificationEventListener {
     public void handleGuestbookCreated(GuestbookCreatedEvent event) {
         try {
             notificationService.create(
-                    event.ownerId(), event.senderId(),
-                    NotificationType.GUESTBOOK_CREATED, event.guestbookId(), null
+                    event.ownerId(), event.authorId(),
+                    NotificationType.GUESTBOOK_CREATED, event.authorId(), String.valueOf(event.ownerId())
             );
         } catch (Exception e) {
-            log.warn("방명록 알림 생성 실패 - guestbookId: {}", event.guestbookId(), e);
+            log.warn("방명록 알림 생성 실패 - ownerId: {}, authorId: {}",
+                    event.ownerId(), event.authorId(), e);
         }
     }
 
