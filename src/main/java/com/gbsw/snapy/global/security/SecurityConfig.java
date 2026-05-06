@@ -1,6 +1,8 @@
 package com.gbsw.snapy.global.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gbsw.snapy.global.security.filter.JwtAuthenticationFilter;
+import com.gbsw.snapy.global.security.filter.PhoneRegistrationFilter;
 import com.gbsw.snapy.global.security.handler.CustomAccessDeniedHandler;
 import com.gbsw.snapy.global.security.handler.CustomAuthenticationEntryPoint;
 import com.gbsw.snapy.global.security.jwt.JwtProvider;
@@ -33,9 +35,11 @@ public class SecurityConfig {
     private final JwtProvider jwtProvider;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
+    private final ObjectMapper objectMapper;
 
     private static final String[] PUBLIC_URLS = {
             "/api/auth/**",
+            "/auth/google/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
@@ -56,12 +60,18 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(phoneRegistrationFilter(), JwtAuthenticationFilter.class)
                 .build();
     }
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(jwtProvider);
+    }
+
+    @Bean
+    public PhoneRegistrationFilter phoneRegistrationFilter() {
+        return new PhoneRegistrationFilter(objectMapper);
     }
 
     @Bean

@@ -6,6 +6,7 @@ import com.gbsw.snapy.domain.guestbook.dto.request.GuestBookCreateRequest;
 import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookCreateResponse;
 import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookResponse;
 import com.gbsw.snapy.domain.guestbook.service.GuestBookService;
+import com.gbsw.snapy.domain.users.dto.request.UpdatePhoneRequest;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
@@ -16,6 +17,7 @@ import com.gbsw.snapy.global.security.CustomUserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -44,6 +46,15 @@ public class UserController {
     ) {
         UserProfileResponse response = userService.getMyProfile(principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/me/phone")
+    public ResponseEntity<ApiResponse<Void>> updatePhone(
+            @Valid @RequestBody UpdatePhoneRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        userService.updatePhone(principal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PatchMapping("/me/background-image")
