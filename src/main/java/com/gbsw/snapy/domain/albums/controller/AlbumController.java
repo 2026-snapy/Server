@@ -38,11 +38,10 @@ public class AlbumController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<AlbumListResponse>>> getAlbumsByMonth(
             @RequestParam int month,
-            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String userHandle,
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        Long targetUserId = (userId != null) ? userId : principal.getId();
-        List<AlbumListResponse> response = albumQueryService.getAlbumsByMonth(targetUserId, month, principal.getId());
+        List<AlbumListResponse> response = albumQueryService.getAlbumsByMonth(userHandle, month, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
