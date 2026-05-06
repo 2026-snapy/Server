@@ -105,9 +105,11 @@ public class AlbumQueryService {
             throw new CustomException(ErrorCode.INVALID_MONTH);
         }
 
-        Long targetUserId = (targetUserHandle == null || targetUserHandle.isBlank())
+        String normalizedHandle = (targetUserHandle == null) ? null : targetUserHandle.trim();
+
+        Long targetUserId = (normalizedHandle == null || normalizedHandle.isBlank())
                 ? requesterId
-                : userRepository.findByHandle(targetUserHandle)
+                : userRepository.findByHandle(normalizedHandle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND))
                 .getId();
 
