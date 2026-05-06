@@ -16,6 +16,7 @@ import com.gbsw.snapy.domain.photos.repository.PhotoRepository;
 import com.gbsw.snapy.domain.settings.entity.UserSetting;
 import com.gbsw.snapy.domain.settings.entity.Visibility;
 import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
+import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,7 @@ public class AlbumQueryService {
     private final PhotoRepository photoRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
+    private final UserRepository userRepository;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
     @Transactional(readOnly = true)
@@ -98,10 +100,16 @@ public class AlbumQueryService {
     }
 
     @Transactional(readOnly = true)
-    public List<AlbumListResponse> getAlbumsByMonth(Long targetUserId, int month, Long requesterId) {
+    public List<AlbumListResponse> getAlbumsByMonth(String targetUserHandle, int month, Long requesterId) {
         if (month < 1 || month > 12) {
             throw new CustomException(ErrorCode.INVALID_MONTH);
         }
+
+        Long targetUserId = (targetUserHandle == null || targetUserHandle.isBlank())
+                ? requesterId
+                : userRepository.findByHandle(targetUserHandle)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND))
+                .getId();
 
         boolean isOwner = targetUserId.equals(requesterId);
         YearMonth currentMonth = YearMonth.now(KST_ZONE);
