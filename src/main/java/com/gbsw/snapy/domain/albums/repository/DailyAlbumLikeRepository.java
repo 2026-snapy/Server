@@ -2,6 +2,8 @@ package com.gbsw.snapy.domain.albums.repository;
 
 import com.gbsw.snapy.domain.albums.entity.DailyAlbumLike;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -19,5 +21,12 @@ public interface DailyAlbumLikeRepository extends JpaRepository<DailyAlbumLike, 
 
     List<DailyAlbumLike> findByAlbumIdInAndUserId(Collection<Long> albumIds, Long userId);
 
-    List<DailyAlbumLike> findByAlbumIdIn(Collection<Long> albumIds);
+    @Query("SELECT l.albumId AS albumId, COUNT(l) AS count " +
+            "FROM DailyAlbumLike l WHERE l.albumId IN :albumIds GROUP BY l.albumId")
+    List<AlbumLikeCountProjection> countByAlbumIdIn(@Param("albumIds") Collection<Long> albumIds);
+
+    interface AlbumLikeCountProjection {
+        Long getAlbumId();
+        Long getCount();
+    }
 }
