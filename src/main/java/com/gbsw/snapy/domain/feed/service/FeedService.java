@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.feed.service;
 
 import com.gbsw.snapy.domain.albums.dto.response.AlbumDetailResponse;
 import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
+import com.gbsw.snapy.domain.albums.repository.DailyAlbumLikeRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
 import com.gbsw.snapy.domain.albums.service.AlbumQueryService;
 import com.gbsw.snapy.domain.feed.dto.request.FeedRecommendRequest;
@@ -22,6 +23,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -33,6 +36,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FeedService {
     private final DailyAlbumRepository dailyAlbumRepository;
+    private final DailyAlbumLikeRepository dailyAlbumLikeRepository;
     private final UserRepository userRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
@@ -70,7 +74,7 @@ public class FeedService {
         Map<Long, User> userById = userRepository.findAllById(ownerIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        List<FeedItemResponse> albumDetails = orderedAlbums.stream()
+        List<DailyAlbum> visibleAlbums = orderedAlbums.stream()
                 .filter((a) -> {
                     if (a.getUserId().equals(userId)) {
                         return true;
@@ -97,13 +101,28 @@ public class FeedService {
 
                     return true;
                 })
+                .toList();
+
+        List<Long> visibleAlbumIds = visibleAlbums.stream().map(DailyAlbum::getId).toList();
+        Map<Long, Long> likeCountByAlbumId = new HashMap<>();
+        Set<Long> likedAlbumIds = new HashSet<>();
+        if (!visibleAlbumIds.isEmpty()) {
+            dailyAlbumLikeRepository.countByAlbumIdIn(visibleAlbumIds)
+                    .forEach(p -> likeCountByAlbumId.put(p.getAlbumId(), p.getCount()));
+            dailyAlbumLikeRepository.findByAlbumIdInAndUserId(visibleAlbumIds, userId)
+                    .forEach(l -> likedAlbumIds.add(l.getAlbumId()));
+        }
+
+        List<FeedItemResponse> albumDetails = visibleAlbums.stream()
                 .map((a) -> {
                     LocalDateTime snapshotBoundary = a.getUserId().equals(userId) ? null : a.getPublishedAt();
                     List<AlbumQueryService.PhotoSetView> sets = albumQueryService.loadPhotoSets(a.getId(), snapshotBoundary);
                     List<AlbumDetailResponse.AlbumPhotoSet> mapped = sets.stream()
                             .map(s -> new AlbumDetailResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl(), s.createdAt()))
                             .toList();
-                    return FeedItemResponse.of(a, mapped, userById.get(a.getUserId()));
+                    long likeCount = likeCountByAlbumId.getOrDefault(a.getId(), 0L);
+                    boolean liked = likedAlbumIds.contains(a.getId());
+                    return FeedItemResponse.of(a, likeCount, liked, mapped, userById.get(a.getUserId()));
                 }).toList();
         return CursorResponse.of(albumDetails, response.getNextCursor(), response.getHasNext());
     }

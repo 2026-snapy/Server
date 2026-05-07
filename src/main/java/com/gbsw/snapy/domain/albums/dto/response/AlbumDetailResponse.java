@@ -11,13 +11,17 @@ public record AlbumDetailResponse(
         Long albumId,
         LocalDate albumDate,
         int photoCount,
+        long likeCount,
+        boolean liked,
         List<AlbumPhotoSet> photos
 ) {
-    public static AlbumDetailResponse of(DailyAlbum album, List<AlbumPhotoSet> photos) {
+    public static AlbumDetailResponse of(DailyAlbum album, long likeCount, boolean liked, List<AlbumPhotoSet> photos) {
         return new AlbumDetailResponse(
                 album.getId(),
                 album.getAlbumDate(),
                 album.getPhotoCount(),
+                likeCount,
+                liked,
                 photos
         );
     }
