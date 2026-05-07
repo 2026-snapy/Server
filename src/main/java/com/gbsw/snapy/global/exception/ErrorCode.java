@@ -84,7 +84,8 @@ public enum ErrorCode {
     PHONE_NOT_REGISTERED(HttpStatus.FORBIDDEN, "휴대폰 번호를 등록해야 이용할 수 있습니다."),
 
     // OAuth
-    GOOGLE_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "Google 로그인에 실패했습니다.");
+    GOOGLE_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "Google 로그인에 실패했습니다."),
+    APPLE_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "Apple 로그인에 실패했습니다.");
 
     private final HttpStatus status;
     private final String message;
