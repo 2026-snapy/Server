@@ -264,6 +264,7 @@ public class AppleOAuthService {
         }
     }
 
+    // TODO: 동시성 문제 발생시 트랜잭션 적용 필요
     private String generateUniqueHandle(String appleSub) {
         String base = "a_" + appleSub.substring(0, Math.min(8, appleSub.length()));
         if (!userRepository.existsByHandle(base)) return base;

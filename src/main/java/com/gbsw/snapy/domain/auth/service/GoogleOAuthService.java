@@ -184,6 +184,7 @@ public class GoogleOAuthService {
 
     // ── 유틸 ──────────────────────────────────────────────────────────────────
 
+    // TODO: 동시성 문제 발생시 트랜잭션 적용 필요
     private String generateUniqueHandle(String googleSub) {
         String base = "g_" + googleSub.substring(0, Math.min(8, googleSub.length()));
         if (!userRepository.existsByHandle(base)) {
