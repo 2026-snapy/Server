@@ -8,6 +8,7 @@ import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
 import com.gbsw.snapy.domain.albums.entity.AlbumStatus;
 import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
 import com.gbsw.snapy.domain.albums.repository.AlbumPhotoRepository;
+import com.gbsw.snapy.domain.albums.repository.DailyAlbumLikeRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.domain.photos.entity.Photo;
@@ -39,6 +40,7 @@ public class AlbumQueryService {
 
     private final DailyAlbumRepository dailyAlbumRepository;
     private final AlbumPhotoRepository albumPhotoRepository;
+    private final DailyAlbumLikeRepository dailyAlbumLikeRepository;
     private final PhotoRepository photoRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
@@ -96,7 +98,10 @@ public class AlbumQueryService {
         List<AlbumDetailResponse.AlbumPhotoSet> mapped = sets.stream()
                 .map(s -> new AlbumDetailResponse.AlbumPhotoSet(s.type(), s.frontImageUrl(), s.backImageUrl(), s.createdAt()))
                 .toList();
-        return AlbumDetailResponse.of(album, mapped);
+
+        long likeCount = dailyAlbumLikeRepository.countByAlbumId(album.getId());
+        boolean liked = dailyAlbumLikeRepository.existsByAlbumIdAndUserId(album.getId(), userId);
+        return AlbumDetailResponse.of(album, likeCount, liked, mapped);
     }
 
     @Transactional(readOnly = true)

@@ -1,16 +1,23 @@
 package com.gbsw.snapy.domain.albums.service;
 
 import com.gbsw.snapy.domain.albums.dto.request.AlbumUploadRequest;
+import com.gbsw.snapy.domain.albums.dto.response.AlbumLikeResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumPublishResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumUploadResponse;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhoto;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
 import com.gbsw.snapy.domain.albums.entity.AlbumStatus;
 import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
+import com.gbsw.snapy.domain.albums.entity.DailyAlbumLike;
 import com.gbsw.snapy.domain.albums.repository.AlbumPhotoRepository;
+import com.gbsw.snapy.domain.albums.repository.DailyAlbumLikeRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
+import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.domain.notifications.event.AlbumPublishedEvent;
 import com.gbsw.snapy.domain.notifications.event.NewStoryEvent;
+import com.gbsw.snapy.domain.settings.entity.UserSetting;
+import com.gbsw.snapy.domain.settings.entity.Visibility;
+import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
 import com.gbsw.snapy.domain.photos.dto.response.PhotoUploadResponse;
 import com.gbsw.snapy.domain.photos.entity.Photo;
 import com.gbsw.snapy.domain.photos.entity.PhotoType;
@@ -32,6 +39,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -44,11 +52,14 @@ public class AlbumCommandService {
 
     private final DailyAlbumRepository dailyAlbumRepository;
     private final AlbumPhotoRepository albumPhotoRepository;
+    private final DailyAlbumLikeRepository dailyAlbumLikeRepository;
     private final PhotoService photoService;
     private final PhotoRepository photoRepository;
     private final S3Service s3Service;
     private final StoryService storyService;
     private final StoryRepository storyRepository;
+    private final UserSettingRepository userSettingRepository;
+    private final FriendRepository friendRepository;
     private final ApplicationEventPublisher eventPublisher;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
@@ -182,6 +193,56 @@ public class AlbumCommandService {
         album.publish();
 
         eventPublisher.publishEvent(new AlbumPublishedEvent(album.getId(), album.getUserId()));
+    }
+
+    @Transactional
+    public AlbumLikeResponse toggleLike(Long albumId, Long userId) {
+        DailyAlbum album = dailyAlbumRepository.findById(albumId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+
+        if (!album.getUserId().equals(userId)) {
+            if (album.getStatus() != AlbumStatus.PUBLISHED) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+
+            YearMonth albumMonth = YearMonth.from(album.getAlbumDate());
+            YearMonth currentMonth = YearMonth.now(KST_ZONE);
+            boolean isCurrentMonth = albumMonth.equals(currentMonth);
+
+            UserSetting setting = userSettingRepository.findById(album.getUserId()).orElse(null);
+
+            Visibility v;
+            if (isCurrentMonth) {
+                v = (setting != null) ? setting.getFeedVisibility() : Visibility.FRIENDS_ONLY;
+            } else {
+                v = (setting != null) ? setting.getPastAlbumVisibility() : Visibility.FRIENDS_ONLY;
+                if (v == Visibility.ONLY_ME) {
+                    throw new CustomException(ErrorCode.ACCESS_DENIED);
+                }
+            }
+            if (v == Visibility.FRIENDS_ONLY && !friendRepository.existsFriendship(userId, album.getUserId())) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+        }
+
+        Optional<DailyAlbumLike> existing = dailyAlbumLikeRepository.findByAlbumIdAndUserId(albumId, userId);
+
+        boolean liked;
+        if (existing.isPresent()) {
+            dailyAlbumLikeRepository.delete(existing.get());
+            liked = false;
+        } else {
+            dailyAlbumLikeRepository.save(
+                    DailyAlbumLike.builder()
+                            .albumId(albumId)
+                            .userId(userId)
+                            .build()
+            );
+            liked = true;
+        }
+
+        long likeCount = dailyAlbumLikeRepository.countByAlbumId(albumId);
+        return new AlbumLikeResponse(albumId, liked, likeCount);
     }
 
     @Transactional
