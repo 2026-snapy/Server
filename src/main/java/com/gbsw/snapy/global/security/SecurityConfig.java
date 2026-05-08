@@ -40,6 +40,7 @@ public class SecurityConfig {
     private static final String[] PUBLIC_URLS = {
             "/api/auth/**",
             "/auth/google/**",
+            "/auth/apple/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-ui.html",
