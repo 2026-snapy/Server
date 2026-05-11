@@ -4,6 +4,8 @@ services:
     container_name: snapy-app
     ports:
       - "8080:8080"
+    volumes:
+      - /home/ec2-user/snapy-app/certs/apns.pem:/app/certs/apns.pem:ro
     env_file:
       - .env
     environment:
