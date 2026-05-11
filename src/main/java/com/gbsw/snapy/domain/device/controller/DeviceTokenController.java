@@ -1,5 +1,6 @@
 package com.gbsw.snapy.domain.device.controller;
 
+import com.gbsw.snapy.domain.device.dto.request.DeviceTokenDeleteRequest;
 import com.gbsw.snapy.domain.device.dto.request.DeviceTokenRegisterRequest;
 import com.gbsw.snapy.domain.device.service.DeviceTokenService;
 import com.gbsw.snapy.global.common.ApiResponse;
@@ -28,10 +29,10 @@ public class DeviceTokenController {
 
     @DeleteMapping
     public ResponseEntity<ApiResponse<Void>> delete(
-            @RequestParam String token,
+            @Valid @RequestBody DeviceTokenDeleteRequest request,
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        deviceTokenService.delete(principal.getId(), token);
+        deviceTokenService.delete(principal.getId(), request.token());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
