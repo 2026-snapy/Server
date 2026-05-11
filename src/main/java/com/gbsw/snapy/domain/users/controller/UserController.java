@@ -43,6 +43,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    // TODO: Soft Delete로 처리중 추후 배치 처리를 통해 유저 관련 데이터 삭제가 필요함
     @DeleteMapping("/me")
     public ResponseEntity<ApiResponse<Void>> deleteAccount(
             @AuthenticationPrincipal CustomUserPrincipal principal
