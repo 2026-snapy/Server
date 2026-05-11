@@ -7,15 +7,19 @@ public record UserProfileResponse(
         String username,
         String profileImageUrl,
         String backgroundImageUrl,
-        long friendCount
+        long friendCount,
+        int currentStreak,
+        int maxStreak
 ) {
-    public static UserProfileResponse from(User user, long friendCount) {
+    public static UserProfileResponse from(User user, long friendCount, int currentStreak, int maxStreak) {
         return new UserProfileResponse(
                 user.getHandle(),
                 user.getUsername(),
                 user.getProfileImageUrl(),
                 user.getBackGroundImageUrl(),
-                friendCount
+                friendCount,
+                currentStreak,
+                maxStreak
         );
     }
 }
