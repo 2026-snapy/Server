@@ -16,6 +16,8 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Slf4j
 @Service
@@ -25,6 +27,7 @@ public class ApnsPushService {
     private final ObjectProvider<ApnsClient> apnsClientProvider;
     private final ApnsProperties apnsProperties;
     private final DeviceTokenRepository deviceTokenRepository;
+    private final Executor apnsResponseExecutor;
 
     public void sendToUser(Long userId, NotificationType type) {
         if (!apnsProperties.isEnabled()) {
@@ -52,13 +55,21 @@ public class ApnsPushService {
                     payload
             );
 
-            apnsClient.sendNotification(notification).whenComplete((response, throwable) -> {
+            CompletableFuture<PushNotificationResponse<SimpleApnsPushNotification>> future;
+            try {
+                future = apnsClient.sendNotification(notification);
+            } catch (Exception e) {
+                log.warn("APNs push submission failed - userId: {}, tokenId: {}", userId, deviceToken.getId(), e);
+                continue;
+            }
+
+            future.whenCompleteAsync((response, throwable) -> {
                 if (throwable != null) {
                     log.warn("APNs push failed - userId: {}, tokenId: {}", userId, deviceToken.getId(), throwable);
                     return;
                 }
                 handleResponse(deviceToken, response);
-            });
+            }, apnsResponseExecutor);
         }
     }
 

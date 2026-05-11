@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.File;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 @Configuration
 @EnableConfigurationProperties(ApnsProperties.class)
@@ -27,5 +29,10 @@ public class ApnsConfig {
                         properties.getCertificatePassword()
                 )
                 .build();
+    }
+
+    @Bean
+    public Executor apnsResponseExecutor() {
+        return Executors.newFixedThreadPool(2);
     }
 }
