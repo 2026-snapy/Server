@@ -114,7 +114,7 @@ public class AlbumQueryService {
 
         Long targetUserId = (normalizedHandle == null || normalizedHandle.isBlank())
                 ? requesterId
-                : userRepository.findByHandle(normalizedHandle)
+                : userRepository.findByHandleAndDeletedAtIsNull(normalizedHandle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND))
                 .getId();
 

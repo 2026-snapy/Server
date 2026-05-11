@@ -37,7 +37,7 @@ public class FriendService {
 
     @Transactional
     public void sendRequest(Long senderId, String receiverHandle) {
-        User receiver = userRepository.findByHandle(receiverHandle)
+        User receiver = userRepository.findByHandleAndDeletedAtIsNull(receiverHandle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (senderId.equals(receiver.getId())) {
@@ -62,7 +62,7 @@ public class FriendService {
     }
 
     public FriendRequestStatusResponse getRequestStatus(Long senderId, String receiverHandle) {
-        User receiver = userRepository.findByHandle(receiverHandle)
+        User receiver = userRepository.findByHandleAndDeletedAtIsNull(receiverHandle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (friendRepository.existsFriendship(senderId, receiver.getId())) {
@@ -81,7 +81,7 @@ public class FriendService {
     }
 
     public List<FriendResponse> getFriends(String handle) {
-        User user = userRepository.findByHandle(handle)
+        User user = userRepository.findByHandleAndDeletedAtIsNull(handle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         List<FriendUserProjection> projections = friendRepository.findFriendsByUserId(user.getId());
@@ -95,7 +95,7 @@ public class FriendService {
     }
 
     public List<FriendResponse> getMutualFriends(Long myId, String handle) {
-        User target = userRepository.findByHandle(handle)
+        User target = userRepository.findByHandleAndDeletedAtIsNull(handle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (myId.equals(target.getId())) {
@@ -146,7 +146,7 @@ public class FriendService {
 
     @Transactional
     public void deleteFriend(Long myId, String handle) {
-        User target = userRepository.findByHandle(handle)
+        User target = userRepository.findByHandleAndDeletedAtIsNull(handle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!friendRepository.existsFriendship(myId, target.getId())) {
@@ -158,7 +158,7 @@ public class FriendService {
 
     @Transactional
     public void cancelRequest(Long senderId, String receiverHandle) {
-        User receiver = userRepository.findByHandle(receiverHandle)
+        User receiver = userRepository.findByHandleAndDeletedAtIsNull(receiverHandle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (!friendRequestRepository.existsBySenderIdAndReceiverId(senderId, receiver.getId())) {

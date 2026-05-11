@@ -82,6 +82,10 @@ public class GoogleOAuthService {
                 ? existing.get()                 // 기존 유저 → 로그인
                 : registerOAuthUser(userInfo);   // 신규 유저 → 회원가입 후 로그인
 
+        if (user.isDeleted()) {
+            user.restore();
+        }
+
         return loginOAuthUser(user);
     }
 
