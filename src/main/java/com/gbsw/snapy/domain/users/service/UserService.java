@@ -12,6 +12,7 @@ import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.auth.repository.RefreshTokenRepository;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
+import com.gbsw.snapy.domain.streaks.service.StreakService;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import com.gbsw.snapy.infra.s3.S3Service;
@@ -30,19 +31,22 @@ public class UserService {
     private final FriendRepository friendRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final S3Service s3Service;
+    private final StreakService streakService;
 
     public UserProfileResponse getProfile(String handle) {
         User user = userRepository.findByHandleAndDeletedAtIsNull(handle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         long friendCount = friendRepository.countFriendsByUserId(user.getId());
-        return UserProfileResponse.from(user, friendCount);
+        StreakService.StreakSummary streak = streakService.getSummary(user.getId());
+        return UserProfileResponse.from(user, friendCount, streak.current(), streak.max());
     }
 
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         long friendCount = friendRepository.countFriendsByUserId(userId);
-        return UserProfileResponse.from(user, friendCount);
+        StreakService.StreakSummary streak = streakService.getSummary(userId);
+        return UserProfileResponse.from(user, friendCount, streak.current(), streak.max());
     }
 
     public UpdateBackgroundImageResponse updateBackgroundImage(Long userId, MultipartFile file) {
