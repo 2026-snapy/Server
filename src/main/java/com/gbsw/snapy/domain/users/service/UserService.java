@@ -1,11 +1,15 @@
 package com.gbsw.snapy.domain.users.service;
 
+import com.gbsw.snapy.domain.users.dto.request.UpdateHandleRequest;
 import com.gbsw.snapy.domain.users.dto.request.UpdatePhoneRequest;
+import com.gbsw.snapy.domain.users.dto.request.UpdateUsernameRequest;
+import com.gbsw.snapy.domain.users.dto.response.CheckHandleResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserSearchResponse;
 import com.gbsw.snapy.domain.users.entity.User;
+import com.gbsw.snapy.domain.auth.repository.RefreshTokenRepository;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.global.exception.CustomException;
@@ -13,6 +17,7 @@ import com.gbsw.snapy.global.exception.ErrorCode;
 import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -23,18 +28,15 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final S3Service s3Service;
 
     public UserProfileResponse getProfile(String handle) {
-        User user = userRepository.findByHandle(handle)
+        User user = userRepository.findByHandleAndDeletedAtIsNull(handle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         long friendCount = friendRepository.countFriendsByUserId(user.getId());
         return UserProfileResponse.from(user, friendCount);
     }
-
-//    public getGuestBook() {
-//
-//    }
 
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
@@ -106,7 +108,7 @@ public class UserService {
     }
 
     public List<UserSearchResponse> searchUsers(String q) {
-        List<User> users = userRepository.findByHandleContainingIgnoreCaseOrUsernameContainingIgnoreCase(q, q);
+        List<User> users = userRepository.searchActiveUsers(q);
 
         List<UserSearchResponse> result = new ArrayList<>();
         for (User user : users) {
@@ -114,5 +116,37 @@ public class UserService {
         }
 
         return result;
+    }
+
+    @Transactional
+    public void deleteAccount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        refreshTokenRepository.deleteAllByUserId(userId);
+        user.delete();
+    }
+
+    public CheckHandleResponse checkHandle(String handle) {
+        boolean available = !userRepository.existsByHandle(handle);
+        return new CheckHandleResponse(available);
+    }
+
+    @Transactional
+    public void updateHandle(Long userId, UpdateHandleRequest request) {
+        if (userRepository.existsByHandle(request.getHandle())) {
+            throw new CustomException(ErrorCode.DUPLICATE_HANDLE);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        user.setHandle(request.getHandle());
+    }
+
+    @Transactional
+    public void updateUsername(Long userId, UpdateUsernameRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        user.setUsername(request.getUsername());
     }
 }

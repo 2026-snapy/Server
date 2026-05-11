@@ -90,6 +90,10 @@ public class AppleOAuthService {
                 ? existing.get()
                 : registerOAuthUser(userInfo, fullName);
 
+        if (user.isDeleted()) {
+            user.restore();
+        }
+
         return loginOAuthUser(user);
     }
 

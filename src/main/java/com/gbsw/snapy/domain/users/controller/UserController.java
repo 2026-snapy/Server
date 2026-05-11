@@ -6,7 +6,10 @@ import com.gbsw.snapy.domain.guestbook.dto.request.GuestBookCreateRequest;
 import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookCreateResponse;
 import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookResponse;
 import com.gbsw.snapy.domain.guestbook.service.GuestBookService;
+import com.gbsw.snapy.domain.users.dto.request.UpdateHandleRequest;
 import com.gbsw.snapy.domain.users.dto.request.UpdatePhoneRequest;
+import com.gbsw.snapy.domain.users.dto.request.UpdateUsernameRequest;
+import com.gbsw.snapy.domain.users.dto.response.CheckHandleResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
@@ -40,12 +43,47 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    // TODO: Soft Delete로 처리중 추후 배치 처리를 통해 유저 관련 데이터 삭제가 필요함
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        userService.deleteAccount(principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getMyProfile(
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         UserProfileResponse response = userService.getMyProfile(principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/handle/check")
+    public ResponseEntity<ApiResponse<CheckHandleResponse>> checkHandle(
+            @RequestParam String handle
+    ) {
+        CheckHandleResponse response = userService.checkHandle(handle);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/me/handle")
+    public ResponseEntity<ApiResponse<Void>> updateHandle(
+            @Valid @RequestBody UpdateHandleRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        userService.updateHandle(principal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PatchMapping("/me/username")
+    public ResponseEntity<ApiResponse<Void>> updateUsername(
+            @Valid @RequestBody UpdateUsernameRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        userService.updateUsername(principal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PatchMapping("/me/phone")
