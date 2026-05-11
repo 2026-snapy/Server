@@ -6,7 +6,10 @@ import com.gbsw.snapy.domain.guestbook.dto.request.GuestBookCreateRequest;
 import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookCreateResponse;
 import com.gbsw.snapy.domain.guestbook.dto.response.GuestBookResponse;
 import com.gbsw.snapy.domain.guestbook.service.GuestBookService;
+import com.gbsw.snapy.domain.users.dto.request.UpdateHandleRequest;
 import com.gbsw.snapy.domain.users.dto.request.UpdatePhoneRequest;
+import com.gbsw.snapy.domain.users.dto.request.UpdateUsernameRequest;
+import com.gbsw.snapy.domain.users.dto.response.CheckHandleResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
@@ -46,6 +49,32 @@ public class UserController {
     ) {
         UserProfileResponse response = userService.getMyProfile(principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/handle/check")
+    public ResponseEntity<ApiResponse<CheckHandleResponse>> checkHandle(
+            @RequestParam String handle
+    ) {
+        CheckHandleResponse response = userService.checkHandle(handle);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PatchMapping("/me/handle")
+    public ResponseEntity<ApiResponse<Void>> updateHandle(
+            @Valid @RequestBody UpdateHandleRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        userService.updateHandle(principal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PatchMapping("/me/username")
+    public ResponseEntity<ApiResponse<Void>> updateUsername(
+            @Valid @RequestBody UpdateUsernameRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        userService.updateUsername(principal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PatchMapping("/me/phone")

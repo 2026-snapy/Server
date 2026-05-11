@@ -1,6 +1,9 @@
 package com.gbsw.snapy.domain.users.service;
 
+import com.gbsw.snapy.domain.users.dto.request.UpdateHandleRequest;
 import com.gbsw.snapy.domain.users.dto.request.UpdatePhoneRequest;
+import com.gbsw.snapy.domain.users.dto.request.UpdateUsernameRequest;
+import com.gbsw.snapy.domain.users.dto.response.CheckHandleResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateBackgroundImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
@@ -13,6 +16,7 @@ import com.gbsw.snapy.global.exception.ErrorCode;
 import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
@@ -31,10 +35,6 @@ public class UserService {
         long friendCount = friendRepository.countFriendsByUserId(user.getId());
         return UserProfileResponse.from(user, friendCount);
     }
-
-//    public getGuestBook() {
-//
-//    }
 
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
@@ -114,5 +114,29 @@ public class UserService {
         }
 
         return result;
+    }
+
+    public CheckHandleResponse checkHandle(String handle) {
+        boolean available = !userRepository.existsByHandle(handle);
+        return new CheckHandleResponse(available);
+    }
+
+    @Transactional
+    public void updateHandle(Long userId, UpdateHandleRequest request) {
+        if (userRepository.existsByHandle(request.getHandle())) {
+            throw new CustomException(ErrorCode.DUPLICATE_HANDLE);
+        }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        user.setHandle(request.getHandle());
+    }
+
+    @Transactional
+    public void updateUsername(Long userId, UpdateUsernameRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        user.setUsername(request.getUsername());
     }
 }
