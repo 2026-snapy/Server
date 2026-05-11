@@ -10,6 +10,7 @@ import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
+import com.gbsw.snapy.infra.apns.ApnsPushService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -30,6 +31,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final ApnsPushService apnsPushService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void create(Long receiverId, Long senderId, NotificationType type,
@@ -44,6 +46,7 @@ public class NotificationService {
                         .read(false)
                         .build()
         );
+        apnsPushService.sendToUser(receiverId, type);
     }
 
     @Transactional(readOnly = true)
