@@ -26,6 +26,7 @@ import com.gbsw.snapy.domain.photos.service.PhotoService;
 import com.gbsw.snapy.domain.stories.entity.Story;
 import com.gbsw.snapy.domain.stories.repository.StoryRepository;
 import com.gbsw.snapy.domain.stories.service.StoryService;
+import com.gbsw.snapy.domain.streaks.service.StreakService;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import com.gbsw.snapy.infra.s3.S3Service;
@@ -60,6 +61,7 @@ public class AlbumCommandService {
     private final StoryRepository storyRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
+    private final StreakService streakService;
     private final ApplicationEventPublisher eventPublisher;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
@@ -171,6 +173,8 @@ public class AlbumCommandService {
 
         album.publish();
 
+        streakService.recordPublish(userId);
+
         eventPublisher.publishEvent(new AlbumPublishedEvent(album.getId(), userId));
 
         return AlbumPublishResponse.from(album);
@@ -191,6 +195,8 @@ public class AlbumCommandService {
         }
 
         album.publish();
+
+        streakService.recordPublish(album.getUserId());
 
         eventPublisher.publishEvent(new AlbumPublishedEvent(album.getId(), album.getUserId()));
     }
