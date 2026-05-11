@@ -9,6 +9,7 @@ import com.gbsw.snapy.domain.users.dto.response.UpdateProfileImageResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserProfileResponse;
 import com.gbsw.snapy.domain.users.dto.response.UserSearchResponse;
 import com.gbsw.snapy.domain.users.entity.User;
+import com.gbsw.snapy.domain.auth.repository.RefreshTokenRepository;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.global.exception.CustomException;
@@ -27,10 +28,11 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final S3Service s3Service;
 
     public UserProfileResponse getProfile(String handle) {
-        User user = userRepository.findByHandle(handle)
+        User user = userRepository.findByHandleAndDeletedAtIsNull(handle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         long friendCount = friendRepository.countFriendsByUserId(user.getId());
         return UserProfileResponse.from(user, friendCount);
@@ -106,7 +108,7 @@ public class UserService {
     }
 
     public List<UserSearchResponse> searchUsers(String q) {
-        List<User> users = userRepository.findByHandleContainingIgnoreCaseOrUsernameContainingIgnoreCase(q, q);
+        List<User> users = userRepository.searchActiveUsers(q);
 
         List<UserSearchResponse> result = new ArrayList<>();
         for (User user : users) {
@@ -114,6 +116,14 @@ public class UserService {
         }
 
         return result;
+    }
+
+    @Transactional
+    public void deleteAccount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+        refreshTokenRepository.deleteAllByUserId(userId);
+        user.delete();
     }
 
     public CheckHandleResponse checkHandle(String handle) {

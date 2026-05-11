@@ -30,7 +30,7 @@ public class GuestBookService {
 
     @Transactional
     public GuestBookCreateResponse create(String ownerHandle, GuestBookCreateRequest request, Long authorId) {
-        User owner = userRepository.findByHandle(ownerHandle)
+        User owner = userRepository.findByHandleAndDeletedAtIsNull(ownerHandle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         if (owner.getId().equals(authorId)) {
@@ -64,7 +64,7 @@ public class GuestBookService {
     // TODO: 추후 MVP 개발이 끝난 후 페이지네이션으로 변경 필요
     @Transactional(readOnly = true)
     public List<GuestBookResponse> getGuestBook(String ownerHandle) {
-        User owner = userRepository.findByHandle(ownerHandle)
+        User owner = userRepository.findByHandleAndDeletedAtIsNull(ownerHandle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         return guestBookRepository.findByOwnerId(owner.getId()).stream()

@@ -43,6 +43,14 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        userService.deleteAccount(principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getMyProfile(
             @AuthenticationPrincipal CustomUserPrincipal principal
