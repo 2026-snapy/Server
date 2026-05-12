@@ -85,6 +85,7 @@ public class ApnsPushService {
         return switch (type) {
             case ALBUM_PHOTO_UPLOAD_REMINDER -> "새 사진을 기록할 시간이에요.";
             case STORY_LIKE -> "회원님의 스토리에 하트가 도착했어요.";
+            case FEED_LIKE -> "회원님의 피드에 좋아요가 도착했어요.";
             case FRIEND_REQUEST -> "새 친구 요청이 도착했어요.";
             case FRIEND_ACCEPTED -> "친구 요청이 수락됐어요.";
             case ALBUM_PUBLISHED -> "친구가 새 게시물을 업로드했어요.";

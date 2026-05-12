@@ -14,6 +14,7 @@ import com.gbsw.snapy.domain.albums.repository.DailyAlbumLikeRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.domain.notifications.event.AlbumPublishedEvent;
+import com.gbsw.snapy.domain.notifications.event.FeedLikedEvent;
 import com.gbsw.snapy.domain.notifications.event.NewStoryEvent;
 import com.gbsw.snapy.domain.settings.entity.UserSetting;
 import com.gbsw.snapy.domain.settings.entity.Visibility;
@@ -238,13 +239,18 @@ public class AlbumCommandService {
             dailyAlbumLikeRepository.delete(existing.get());
             liked = false;
         } else {
-            dailyAlbumLikeRepository.save(
+            DailyAlbumLike like = dailyAlbumLikeRepository.save(
                     DailyAlbumLike.builder()
                             .albumId(albumId)
                             .userId(userId)
                             .build()
             );
             liked = true;
+
+            if (!album.getUserId().equals(userId)) {
+                eventPublisher.publishEvent(new FeedLikedEvent(
+                        albumId, like.getId(), userId, album.getUserId()));
+            }
         }
 
         long likeCount = dailyAlbumLikeRepository.countByAlbumId(albumId);

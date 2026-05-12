@@ -33,6 +33,19 @@ public class NotificationEventListener {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleFeedLiked(FeedLikedEvent event) {
+        try {
+            notificationService.create(
+                    event.ownerId(), event.senderId(),
+                    NotificationType.FEED_LIKE, event.likeId(), String.valueOf(event.albumId())
+            );
+        } catch (Exception e) {
+            log.warn("피드 좋아요 알림 생성 실패 - albumId: {}, likeId: {}",
+                    event.albumId(), event.likeId(), e);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFeedComment(FeedCommentEvent event) {
         try {
             notificationService.create(
