@@ -42,3 +42,6 @@ out/
 /.claude/settings.local.json
 /AGENTS.md
 /src/test/java/com/gbsw/snapy/domain/notifications/event/NotificationEventListenerTest.java
+
+### logs ###
+logs
