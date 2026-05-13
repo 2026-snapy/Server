@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.phone.service;
 
 import com.gbsw.snapy.domain.phone.entity.PhoneVerification;
 import com.gbsw.snapy.domain.phone.repository.PhoneVerificationRepository;
+import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import com.gbsw.snapy.infra.aligo.AligoClient;
@@ -24,12 +25,17 @@ public class PhoneVerificationService {
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final PhoneVerificationRepository phoneVerificationRepository;
+    private final UserRepository userRepository;
     private final AligoClient aligoClient;
 
     // TODO: 추후 트래픽 증가시 Redis로 변경 필요
     @Transactional
     public void issueCode(String phone) {
         LocalDateTime now = LocalDateTime.now();
+
+        if (userRepository.existsByPhone(phone)) {
+            throw new CustomException(ErrorCode.DUPLICATE_PHONE);
+        }
 
         phoneVerificationRepository.findTopByPhoneOrderByCreatedAtDesc(phone)
                 .ifPresent(latest -> {
