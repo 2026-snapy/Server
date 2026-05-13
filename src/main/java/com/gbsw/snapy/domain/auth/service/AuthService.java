@@ -42,15 +42,11 @@ public class AuthService {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new CustomException(ErrorCode.DUPLICATE_EMAIL);
         }
-        if (userRepository.existsByPhone(dto.getPhone())) {
-            throw new CustomException(ErrorCode.DUPLICATE_PHONE);
-        }
 
         User user = User.builder()
                 .handle(dto.getHandle())
                 .username(dto.getUsername())
                 .email(dto.getEmail())
-                .phone(dto.getPhone())
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .build();
 
