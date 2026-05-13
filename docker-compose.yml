@@ -11,6 +11,7 @@ services:
       - .env
     environment:
       TZ: Asia/Seoul
+      LOG_PATH: /app/logs
       SPRING_PROFILES_ACTIVE: deploy
       SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/snapy?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
       SPRING_CLOUD_AWS_REGION_STATIC: ap-northeast-2
