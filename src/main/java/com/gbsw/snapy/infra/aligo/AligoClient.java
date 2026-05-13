@@ -1,5 +1,7 @@
 package com.gbsw.snapy.infra.aligo;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +20,7 @@ public class AligoClient {
 
     private final RestClient aligoRestClient;
     private final AligoProperties properties;
+    private final ObjectMapper objectMapper;
 
     public AligoSendResponse sendSms(String receiver, String message) {
         MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
@@ -29,19 +32,27 @@ public class AligoClient {
         form.add("msg_type", "SMS");
         form.add("testmode_yn", properties.isTestMode() ? "Y" : "N");
 
-        AligoSendResponse response;
+        String rawBody;
         try {
-            response = aligoRestClient.post()
+            rawBody = aligoRestClient.post()
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .body(form)
                     .retrieve()
-                    .body(AligoSendResponse.class);
+                    .body(String.class);
         } catch (RestClientException e) {
             log.error("Aligo SMS 호출 실패 - receiver: {}, cause: {}", receiver, e.getMessage(), e);
             throw new CustomException(ErrorCode.SMS_SEND_FAILED);
         }
 
-        if (response == null || !response.isSuccess()) {
+        AligoSendResponse response;
+        try {
+            response = objectMapper.readValue(rawBody, AligoSendResponse.class);
+        } catch (JsonProcessingException e) {
+            log.error("Aligo SMS 응답 파싱 실패 - receiver: {}, body: {}", receiver, rawBody, e);
+            throw new CustomException(ErrorCode.SMS_SEND_FAILED);
+        }
+
+        if (!response.isSuccess()) {
             log.error("Aligo SMS 응답 실패 - receiver: {}, response: {}", receiver, response);
             throw new CustomException(ErrorCode.SMS_SEND_FAILED);
         }

@@ -84,6 +84,9 @@ public enum ErrorCode {
     // Phone
     PHONE_NOT_REGISTERED(HttpStatus.FORBIDDEN, "휴대폰 번호를 등록해야 이용할 수 있습니다."),
     SMS_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SMS 전송에 실패했습니다."),
+    VERIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "인증번호 발급 내역이 없습니다."),
+    VERIFICATION_CODE_EXPIRED(HttpStatus.BAD_REQUEST, "인증번호가 만료되었습니다."),
+    INVALID_VERIFICATION_CODE(HttpStatus.BAD_REQUEST, "인증번호가 올바르지 않습니다."),
 
     // OAuth
     GOOGLE_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "Google 로그인에 실패했습니다."),
