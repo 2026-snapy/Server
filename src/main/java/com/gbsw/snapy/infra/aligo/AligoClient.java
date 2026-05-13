@@ -32,6 +32,8 @@ public class AligoClient {
         form.add("msg_type", "SMS");
         form.add("testmode_yn", properties.isTestMode() ? "Y" : "N");
 
+        String maskedReceiver = maskPhone(receiver);
+
         String rawBody;
         try {
             rawBody = aligoRestClient.post()
@@ -40,7 +42,7 @@ public class AligoClient {
                     .retrieve()
                     .body(String.class);
         } catch (RestClientException e) {
-            log.error("Aligo SMS 호출 실패 - receiver: {}, cause: {}", receiver, e.getMessage(), e);
+            log.error("Aligo SMS 호출 실패 - receiver: {}, cause: {}", maskedReceiver, e.getMessage(), e);
             throw new CustomException(ErrorCode.SMS_SEND_FAILED);
         }
 
@@ -48,16 +50,23 @@ public class AligoClient {
         try {
             response = objectMapper.readValue(rawBody, AligoSendResponse.class);
         } catch (JsonProcessingException e) {
-            log.error("Aligo SMS 응답 파싱 실패 - receiver: {}, body: {}", receiver, rawBody, e);
+            log.error("Aligo SMS 응답 파싱 실패 - receiver: {}, body: {}", maskedReceiver, rawBody, e);
             throw new CustomException(ErrorCode.SMS_SEND_FAILED);
         }
 
         if (!response.isSuccess()) {
-            log.error("Aligo SMS 응답 실패 - receiver: {}, response: {}", receiver, response);
+            log.error("Aligo SMS 응답 실패 - receiver: {}, response: {}", maskedReceiver, response);
             throw new CustomException(ErrorCode.SMS_SEND_FAILED);
         }
 
-        log.info("Aligo SMS 전송 완료 - receiver: {}, msgId: {}", receiver, response.msgId());
+        log.info("Aligo SMS 전송 완료 - receiver: {}, msgId: {}", maskedReceiver, response.msgId());
         return response;
+    }
+
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 7) {
+            return phone;
+        }
+        return phone.substring(0, 3) + "****" + phone.substring(phone.length() - 4);
     }
 }
