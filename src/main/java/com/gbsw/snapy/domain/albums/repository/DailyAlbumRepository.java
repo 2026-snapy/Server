@@ -21,6 +21,9 @@ public interface DailyAlbumRepository extends JpaRepository<DailyAlbum, Long> {
     List<DailyAlbum> findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(
             Long userId, LocalDate start, LocalDate end);
 
+    List<DailyAlbum> findByUserIdAndStatusAndAlbumDateBetweenOrderByAlbumDateDesc(
+            Long userId, AlbumStatus status, LocalDate start, LocalDate end);
+
     List<DailyAlbum> findByIdIn(List<Long> ids);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

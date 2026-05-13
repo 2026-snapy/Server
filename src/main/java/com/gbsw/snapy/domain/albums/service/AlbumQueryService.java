@@ -150,12 +150,8 @@ public class AlbumQueryService {
         LocalDate end = yearMonth.atEndOfMonth();
 
         List<DailyAlbum> albums = dailyAlbumRepository
-                .findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(targetUserId, start, end);
-        if (!isOwner) {
-            albums = albums.stream()
-                    .filter(a -> a.getStatus() == AlbumStatus.PUBLISHED)
-                    .toList();
-        }
+                .findByUserIdAndStatusAndAlbumDateBetweenOrderByAlbumDateDesc(
+                        targetUserId, AlbumStatus.PUBLISHED, start, end);
         return buildAlbumListResponses(albums);
     }
 
