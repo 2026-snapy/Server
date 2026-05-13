@@ -20,16 +20,25 @@ import java.time.LocalDateTime;
 public class PhoneVerificationService {
 
     private static final Duration CODE_TTL = Duration.ofMinutes(5);
+    private static final Duration RESEND_COOLDOWN = Duration.ofSeconds(90);
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final PhoneVerificationRepository phoneVerificationRepository;
     private final AligoClient aligoClient;
 
+    // TODO: 추후 트래픽 증가시 Redis로 변경 필요
     @Transactional
     public void issueCode(String phone) {
-        String code = generateCode();
         LocalDateTime now = LocalDateTime.now();
 
+        phoneVerificationRepository.findTopByPhoneOrderByCreatedAtDesc(phone)
+                .ifPresent(latest -> {
+                    if (latest.getCreatedAt().plus(RESEND_COOLDOWN).isAfter(now)) {
+                        throw new CustomException(ErrorCode.VERIFICATION_CODE_RESEND_COOLDOWN);
+                    }
+                });
+
+        String code = generateCode();
         phoneVerificationRepository.deleteAllByPhone(phone);
         phoneVerificationRepository.save(
                 PhoneVerification.builder()
