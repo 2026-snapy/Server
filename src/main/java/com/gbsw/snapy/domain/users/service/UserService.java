@@ -12,6 +12,7 @@ import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.auth.repository.RefreshTokenRepository;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
+import com.gbsw.snapy.domain.phone.service.PhoneVerificationService;
 import com.gbsw.snapy.domain.streaks.service.StreakService;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
@@ -32,6 +33,7 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final S3Service s3Service;
     private final StreakService streakService;
+    private final PhoneVerificationService phoneVerificationService;
 
     public UserProfileResponse getProfile(String handle) {
         User user = userRepository.findByHandleAndDeletedAtIsNull(handle)
@@ -101,13 +103,15 @@ public class UserService {
         return UpdateProfileImageResponse.from(user);
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public void updatePhone(Long userId, UpdatePhoneRequest dto) {
         if (userRepository.existsByPhone(dto.getPhone())) {
             throw new CustomException(ErrorCode.DUPLICATE_PHONE);
         }
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
+
+        phoneVerificationService.verifyAndConsume(dto.getPhone(), dto.getCode());
         user.setPhone(dto.getPhone());
     }
 
