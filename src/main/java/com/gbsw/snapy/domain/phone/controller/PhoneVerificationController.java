@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/phone")
+@RequestMapping("/api/users/me/phone")
 public class PhoneVerificationController {
 
     private final PhoneVerificationService phoneVerificationService;
