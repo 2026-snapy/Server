@@ -24,7 +24,7 @@ RUN groupadd --system spring && useradd --system --gid spring spring
 
 WORKDIR /app
 COPY --from=build /workspace/build/libs/messi-of-coding-0.0.1-SNAPSHOT.jar app.jar
-RUN chown -R spring:spring /app
+RUN mkdir -p /app/logs && chown -R spring:spring /app
 USER spring
 
 EXPOSE 8080
