@@ -101,7 +101,7 @@ public class UserService {
         return UpdateProfileImageResponse.from(user);
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public void updatePhone(Long userId, UpdatePhoneRequest dto) {
         if (userRepository.existsByPhone(dto.getPhone())) {
             throw new CustomException(ErrorCode.DUPLICATE_PHONE);

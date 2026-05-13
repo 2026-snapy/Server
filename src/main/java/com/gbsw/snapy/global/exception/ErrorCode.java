@@ -83,6 +83,7 @@ public enum ErrorCode {
 
     // Phone
     PHONE_NOT_REGISTERED(HttpStatus.FORBIDDEN, "휴대폰 번호를 등록해야 이용할 수 있습니다."),
+    SMS_SEND_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "SMS 전송에 실패했습니다."),
 
     // OAuth
     GOOGLE_LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "Google 로그인에 실패했습니다."),
