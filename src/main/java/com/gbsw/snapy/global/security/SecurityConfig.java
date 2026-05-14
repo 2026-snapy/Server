@@ -3,10 +3,13 @@ package com.gbsw.snapy.global.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gbsw.snapy.global.security.filter.JwtAuthenticationFilter;
 import com.gbsw.snapy.global.security.filter.PhoneRegistrationFilter;
+import com.gbsw.snapy.global.security.filter.RateLimitFilter;
 import com.gbsw.snapy.global.security.handler.CustomAccessDeniedHandler;
 import com.gbsw.snapy.global.security.handler.CustomAuthenticationEntryPoint;
 import com.gbsw.snapy.global.security.jwt.JwtProvider;
+import com.gbsw.snapy.global.security.ratelimit.RateLimitProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,6 +32,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableConfigurationProperties(RateLimitProperties.class)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -36,6 +40,7 @@ public class SecurityConfig {
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
     private final ObjectMapper objectMapper;
+    private final RateLimitProperties rateLimitProperties;
 
     private static final String[] PUBLIC_URLS = {
             "/api/auth/**",
@@ -60,9 +65,15 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(authenticationEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
+                .addFilterBefore(rateLimitFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(phoneRegistrationFilter(), JwtAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    public RateLimitFilter rateLimitFilter() {
+        return new RateLimitFilter(rateLimitProperties, objectMapper);
     }
 
     @Bean

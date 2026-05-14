@@ -26,6 +26,11 @@ jwt:
   access-token-expiration: 1800000
   refresh-token-expiration: 604800000
 
+rate-limit:
+  enabled: true
+  max-requests: 100
+  window: 1m
+
 springdoc:
   api-docs:
     path: /v3/api-docs
