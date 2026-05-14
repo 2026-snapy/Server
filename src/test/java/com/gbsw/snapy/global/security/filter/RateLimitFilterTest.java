@@ -12,6 +12,12 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,7 +37,7 @@ class RateLimitFilterTest {
         assertThat(secondResponse.getStatus()).isEqualTo(200);
         assertThat(thirdResponse.getStatus()).isEqualTo(429);
         assertThat(thirdResponse.getHeader("Retry-After")).isEqualTo("60");
-        assertThat(thirdResponse.getContentAsString()).contains("Too many requests");
+        assertThat(thirdResponse.getContentAsString()).contains("요청이 너무 많습니다");
     }
 
     @Test
@@ -54,6 +60,33 @@ class RateLimitFilterTest {
         MockHttpServletResponse response = doFilter(filter, request);
 
         assertThat(response.getStatus()).isEqualTo(200);
+    }
+
+    @Test
+    void countsConcurrentRequestsConsistently() throws Exception {
+        int maxRequests = 20;
+        int totalRequests = 50;
+        RateLimitFilter filter = new RateLimitFilter(properties(maxRequests), objectMapper(), FIXED_CLOCK);
+        ExecutorService executorService = Executors.newFixedThreadPool(8);
+        List<Callable<Integer>> tasks = IntStream.range(0, totalRequests)
+                .mapToObj(ignored -> (Callable<Integer>) () -> doFilter(filter, request("203.0.113.1")).getStatus())
+                .toList();
+
+        List<Integer> statuses = executorService.invokeAll(tasks).stream()
+                .map(future -> {
+                    try {
+                        return future.get();
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
+                    }
+                })
+                .toList();
+        executorService.shutdown();
+        boolean terminated = executorService.awaitTermination(1, TimeUnit.SECONDS);
+
+        assertThat(terminated).isTrue();
+        assertThat(statuses).filteredOn(status -> status == 200).hasSize(maxRequests);
+        assertThat(statuses).filteredOn(status -> status == 429).hasSize(totalRequests - maxRequests);
     }
 
     private RateLimitProperties properties(int maxRequests) {

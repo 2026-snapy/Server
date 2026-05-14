@@ -18,6 +18,7 @@ import java.time.Clock;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 @RequiredArgsConstructor
 public class RateLimitFilter extends OncePerRequestFilter {
@@ -51,19 +52,24 @@ public class RateLimitFilter extends OncePerRequestFilter {
         cleanupExpiredCounters(now, windowMillis);
 
         String key = resolveClientIp(request);
-        RequestCounter counter = counters.compute(key, (ignored, current) -> {
+        AtomicReference<RateLimitResult> result = new AtomicReference<>();
+        counters.compute(key, (ignored, current) -> {
             if (current == null || current.isExpired(now)) {
-                return new RequestCounter(now + windowMillis, 1);
+                RequestCounter next = new RequestCounter(now + windowMillis, 1);
+                result.set(next.toResult());
+                return next;
             }
             current.increment();
+            result.set(current.toResult());
             return current;
         });
 
-        long remaining = Math.max(0, properties.getMaxRequests() - counter.getCount());
-        addRateLimitHeaders(response, counter, remaining);
+        RateLimitResult rateLimitResult = result.get();
+        long remaining = Math.max(0, properties.getMaxRequests() - rateLimitResult.count());
+        addRateLimitHeaders(response, rateLimitResult, remaining);
 
-        if (counter.getCount() > properties.getMaxRequests()) {
-            writeRateLimitResponse(response, counter);
+        if (rateLimitResult.count() > properties.getMaxRequests()) {
+            writeRateLimitResponse(response, rateLimitResult);
             return;
         }
 
@@ -93,14 +99,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
         counters.entrySet().removeIf(entry -> entry.getValue().isExpired(now));
     }
 
-    private void addRateLimitHeaders(HttpServletResponse response, RequestCounter counter, long remaining) {
+    private void addRateLimitHeaders(HttpServletResponse response, RateLimitResult result, long remaining) {
         response.setHeader(X_RATE_LIMIT_LIMIT, String.valueOf(properties.getMaxRequests()));
         response.setHeader(X_RATE_LIMIT_REMAINING, String.valueOf(remaining));
-        response.setHeader(X_RATE_LIMIT_RESET, String.valueOf(counter.getResetAtEpochSeconds()));
+        response.setHeader(X_RATE_LIMIT_RESET, String.valueOf(result.resetAtEpochSeconds()));
     }
 
-    private void writeRateLimitResponse(HttpServletResponse response, RequestCounter counter) throws IOException {
-        long retryAfterSeconds = Math.max(1, (counter.getResetAtMillis() - clock.millis() + 999) / 1000);
+    private void writeRateLimitResponse(HttpServletResponse response, RateLimitResult result) throws IOException {
+        long retryAfterSeconds = Math.max(1, (result.resetAtMillis() - clock.millis() + 999) / 1000);
 
         response.setStatus(ErrorCode.RATE_LIMIT_EXCEEDED.getStatus().value());
         response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
@@ -127,15 +133,14 @@ public class RateLimitFilter extends OncePerRequestFilter {
             count++;
         }
 
-        private int getCount() {
-            return count;
+        private RateLimitResult toResult() {
+            return new RateLimitResult(count, resetAtMillis);
         }
+    }
 
-        private long getResetAtMillis() {
-            return resetAtMillis;
-        }
+    private record RateLimitResult(int count, long resetAtMillis) {
 
-        private long getResetAtEpochSeconds() {
+        private long resetAtEpochSeconds() {
             return (resetAtMillis + 999) / 1000;
         }
     }
