@@ -28,7 +28,7 @@ jwt:
 
 rate-limit:
   enabled: true
-  max-requests: 100
+  max-requests: 700
   window: 1m
 
 springdoc:
