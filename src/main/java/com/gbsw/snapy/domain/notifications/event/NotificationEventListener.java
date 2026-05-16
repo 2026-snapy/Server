@@ -98,10 +98,17 @@ public class NotificationEventListener {
         List<Long> friendIds = friendRepository.findFriendIdsByUserId(event.userId());
         for (Long friendId : friendIds) {
             try {
-                notificationService.create(
-                        friendId, event.userId(),
-                        NotificationType.ALBUM_PUBLISHED, event.albumId(), null
-                );
+                if (event.pushEnabled()) {
+                    notificationService.create(
+                            friendId, event.userId(),
+                            NotificationType.ALBUM_PUBLISHED, event.albumId(), null
+                    );
+                } else {
+                    notificationService.createWithoutPush(
+                            friendId, event.userId(),
+                            NotificationType.ALBUM_PUBLISHED, event.albumId(), null
+                    );
+                }
             } catch (Exception e) {
                 log.warn("앨범 게시 알림 생성 실패 - albumId: {}, friendId: {}",
                         event.albumId(), friendId, e);

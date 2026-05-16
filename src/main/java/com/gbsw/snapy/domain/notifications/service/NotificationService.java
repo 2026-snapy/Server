@@ -37,6 +37,17 @@ public class NotificationService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void create(Long receiverId, Long senderId, NotificationType type,
                        Long referenceId, String referenceType) {
+        create(receiverId, senderId, type, referenceId, referenceType, true);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createWithoutPush(Long receiverId, Long senderId, NotificationType type,
+                                  Long referenceId, String referenceType) {
+        create(receiverId, senderId, type, referenceId, referenceType, false);
+    }
+
+    private void create(Long receiverId, Long senderId, NotificationType type,
+                        Long referenceId, String referenceType, boolean pushEnabled) {
         notificationRepository.save(
                 Notification.builder()
                         .receiverId(receiverId)
@@ -47,7 +58,9 @@ public class NotificationService {
                         .read(false)
                         .build()
         );
-        apnsPushService.sendToUser(receiverId, type);
+        if (pushEnabled) {
+            apnsPushService.sendToUser(receiverId, type);
+        }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

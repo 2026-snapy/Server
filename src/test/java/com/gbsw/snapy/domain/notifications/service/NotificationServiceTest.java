@@ -45,6 +45,22 @@ class NotificationServiceTest {
     }
 
     @Test
+    void createWithoutPushCreatesNotificationAndSkipsPush() {
+        notificationService.createWithoutPush(1L, 2L, NotificationType.ALBUM_PUBLISHED, 10L, null);
+
+        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+        verify(notificationRepository).save(captor.capture());
+        Notification notification = captor.getValue();
+        assertThat(notification.getReceiverId()).isEqualTo(1L);
+        assertThat(notification.getSenderId()).isEqualTo(2L);
+        assertThat(notification.getType()).isEqualTo(NotificationType.ALBUM_PUBLISHED);
+        assertThat(notification.getReferenceId()).isEqualTo(10L);
+        assertThat(notification.getReferenceType()).isNull();
+        assertThat(notification.isRead()).isFalse();
+        verify(apnsPushService, never()).sendToUser(any(), any());
+    }
+
+    @Test
     void createFeedLikeIfAbsentCreatesNotificationAndPushWhenNotExists() {
         when(notificationRepository.existsByDeduplicationKey("FEED_LIKE:1:2:10")).thenReturn(false);
 
