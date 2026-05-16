@@ -6,10 +6,16 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "notifications", indexes = {
-        @Index(name = "idx_notification_receiver_created", columnList = "receiver_id, created_at"),
-        @Index(name = "idx_notification_receiver_unread", columnList = "receiver_id, is_read")
-})
+@Table(
+        name = "notifications",
+        indexes = {
+                @Index(name = "idx_notification_receiver_created", columnList = "receiver_id, created_at"),
+                @Index(name = "idx_notification_receiver_unread", columnList = "receiver_id, is_read")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_notification_deduplication_key", columnNames = "deduplication_key")
+        }
+)
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,6 +41,9 @@ public class Notification {
 
     @Column(name = "reference_type", length = 20)
     private String referenceType;
+
+    @Column(name = "deduplication_key", length = 100)
+    private String deduplicationKey;
 
     @Column(name = "is_read", nullable = false)
     private boolean read;

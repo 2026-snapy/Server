@@ -35,10 +35,8 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleFeedLiked(FeedLikedEvent event) {
         try {
-            notificationService.create(
-                    event.ownerId(), event.senderId(),
-                    NotificationType.FEED_LIKE, event.likeId(), String.valueOf(event.albumId())
-            );
+            notificationService.createFeedLikeIfAbsent(
+                    event.ownerId(), event.senderId(), event.likeId(), event.albumId());
         } catch (Exception e) {
             log.warn("피드 좋아요 알림 생성 실패 - albumId: {}, likeId: {}",
                     event.albumId(), event.likeId(), e);
@@ -100,10 +98,17 @@ public class NotificationEventListener {
         List<Long> friendIds = friendRepository.findFriendIdsByUserId(event.userId());
         for (Long friendId : friendIds) {
             try {
-                notificationService.create(
-                        friendId, event.userId(),
-                        NotificationType.ALBUM_PUBLISHED, event.albumId(), null
-                );
+                if (event.pushEnabled()) {
+                    notificationService.create(
+                            friendId, event.userId(),
+                            NotificationType.ALBUM_PUBLISHED, event.albumId(), null
+                    );
+                } else {
+                    notificationService.createWithoutPush(
+                            friendId, event.userId(),
+                            NotificationType.ALBUM_PUBLISHED, event.albumId(), null
+                    );
+                }
             } catch (Exception e) {
                 log.warn("앨범 게시 알림 생성 실패 - albumId: {}, friendId: {}",
                         event.albumId(), friendId, e);

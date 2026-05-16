@@ -199,7 +199,7 @@ public class AlbumCommandService {
 
         streakService.recordPublish(album.getUserId());
 
-        eventPublisher.publishEvent(new AlbumPublishedEvent(album.getId(), album.getUserId()));
+        eventPublisher.publishEvent(new AlbumPublishedEvent(album.getId(), album.getUserId(), false));
     }
 
     @Transactional
