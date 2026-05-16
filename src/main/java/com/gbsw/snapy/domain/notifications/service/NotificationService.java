@@ -49,6 +49,18 @@ public class NotificationService {
         apnsPushService.sendToUser(receiverId, type);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createFeedLikeIfAbsent(Long receiverId, Long senderId, Long likeId, Long albumId) {
+        String albumReference = String.valueOf(albumId);
+        boolean alreadyNotified = notificationRepository.existsByReceiverIdAndSenderIdAndTypeAndReferenceType(
+                receiverId, senderId, NotificationType.FEED_LIKE, albumReference);
+        if (alreadyNotified) {
+            return;
+        }
+
+        create(receiverId, senderId, NotificationType.FEED_LIKE, likeId, albumReference);
+    }
+
     @Transactional(readOnly = true)
     public NotificationPageResponse getNotifications(Long userId, Pageable pageable) {
         Slice<Notification> slice = notificationRepository
