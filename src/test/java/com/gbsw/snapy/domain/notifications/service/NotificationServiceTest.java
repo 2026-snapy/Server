@@ -7,6 +7,7 @@ import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.infra.apns.ApnsPushService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -35,33 +36,41 @@ class NotificationServiceTest {
 
     @Test
     void createFeedLikeIfAbsentSkipsDuplicateNotificationAndPush() {
-        when(notificationRepository.existsByReceiverIdAndSenderIdAndTypeAndReferenceType(
-                1L, 2L, NotificationType.FEED_LIKE, "10"))
-                .thenReturn(true);
+        when(notificationRepository.existsByDeduplicationKey("FEED_LIKE:1:2:10")).thenReturn(true);
 
         notificationService.createFeedLikeIfAbsent(1L, 2L, 100L, 10L);
 
-        verify(notificationRepository, never()).save(any(Notification.class));
+        verify(notificationRepository, never()).saveAndFlush(any(Notification.class));
         verify(apnsPushService, never()).sendToUser(any(), any());
     }
 
     @Test
     void createFeedLikeIfAbsentCreatesNotificationAndPushWhenNotExists() {
-        when(notificationRepository.existsByReceiverIdAndSenderIdAndTypeAndReferenceType(
-                1L, 2L, NotificationType.FEED_LIKE, "10"))
-                .thenReturn(false);
+        when(notificationRepository.existsByDeduplicationKey("FEED_LIKE:1:2:10")).thenReturn(false);
 
         notificationService.createFeedLikeIfAbsent(1L, 2L, 100L, 10L);
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
-        verify(notificationRepository).save(captor.capture());
+        verify(notificationRepository).saveAndFlush(captor.capture());
         Notification notification = captor.getValue();
         assertThat(notification.getReceiverId()).isEqualTo(1L);
         assertThat(notification.getSenderId()).isEqualTo(2L);
         assertThat(notification.getType()).isEqualTo(NotificationType.FEED_LIKE);
         assertThat(notification.getReferenceId()).isEqualTo(100L);
         assertThat(notification.getReferenceType()).isEqualTo("10");
+        assertThat(notification.getDeduplicationKey()).isEqualTo("FEED_LIKE:1:2:10");
         assertThat(notification.isRead()).isFalse();
         verify(apnsPushService).sendToUser(1L, NotificationType.FEED_LIKE);
+    }
+
+    @Test
+    void createFeedLikeIfAbsentSkipsPushWhenConcurrentInsertWins() {
+        when(notificationRepository.existsByDeduplicationKey("FEED_LIKE:1:2:10")).thenReturn(false);
+        when(notificationRepository.saveAndFlush(any(Notification.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate"));
+
+        notificationService.createFeedLikeIfAbsent(1L, 2L, 100L, 10L);
+
+        verify(apnsPushService, never()).sendToUser(any(), any());
     }
 }
