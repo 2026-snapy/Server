@@ -14,6 +14,8 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     long countByReceiverIdAndReadFalse(Long receiverId);
 
+    boolean existsByDeduplicationKey(String deduplicationKey);
+
     @Modifying
     @Query("UPDATE Notification n SET n.read = true WHERE n.receiverId = :receiverId AND n.read = false")
     void markAllAsRead(@Param("receiverId") Long receiverId);

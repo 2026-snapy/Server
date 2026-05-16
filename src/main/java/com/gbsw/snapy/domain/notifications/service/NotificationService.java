@@ -12,6 +12,7 @@ import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
 import com.gbsw.snapy.infra.apns.ApnsPushService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
@@ -47,6 +48,36 @@ public class NotificationService {
                         .build()
         );
         apnsPushService.sendToUser(receiverId, type);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createFeedLikeIfAbsent(Long receiverId, Long senderId, Long likeId, Long albumId) {
+        String albumReference = String.valueOf(albumId);
+        String deduplicationKey = feedLikeDeduplicationKey(receiverId, senderId, albumId);
+        if (notificationRepository.existsByDeduplicationKey(deduplicationKey)) {
+            return;
+        }
+
+        try {
+            notificationRepository.saveAndFlush(
+                    Notification.builder()
+                            .receiverId(receiverId)
+                            .senderId(senderId)
+                            .type(NotificationType.FEED_LIKE)
+                            .referenceId(likeId)
+                            .referenceType(albumReference)
+                            .deduplicationKey(deduplicationKey)
+                            .read(false)
+                            .build()
+            );
+        } catch (DataIntegrityViolationException e) {
+            return;
+        }
+        apnsPushService.sendToUser(receiverId, NotificationType.FEED_LIKE);
+    }
+
+    private String feedLikeDeduplicationKey(Long receiverId, Long senderId, Long albumId) {
+        return NotificationType.FEED_LIKE + ":" + receiverId + ":" + senderId + ":" + albumId;
     }
 
     @Transactional(readOnly = true)
