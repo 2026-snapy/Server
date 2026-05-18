@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.albums.controller;
 
 import com.gbsw.snapy.domain.albums.dto.request.AlbumUploadRequest;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumDetailResponse;
+import com.gbsw.snapy.domain.albums.dto.response.AlbumLikeListResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumLikeResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumListResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumPublishResponse;
@@ -86,6 +87,15 @@ public class AlbumController {
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         AlbumLikeResponse response = albumCommandService.toggleLike(albumId, principal.getId());
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/{albumId}/likes")
+    public ResponseEntity<ApiResponse<List<AlbumLikeListResponse>>> getLikes(
+            @PathVariable Long albumId,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        List<AlbumLikeListResponse> response = albumQueryService.getLikes(albumId, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 }

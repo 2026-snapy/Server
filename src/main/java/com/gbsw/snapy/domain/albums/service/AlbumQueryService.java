@@ -1,12 +1,14 @@
 package com.gbsw.snapy.domain.albums.service;
 
 import com.gbsw.snapy.domain.albums.dto.response.AlbumDetailResponse;
+import com.gbsw.snapy.domain.albums.dto.response.AlbumLikeListResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumListResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumTodayResponse;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhoto;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
 import com.gbsw.snapy.domain.albums.entity.AlbumStatus;
 import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
+import com.gbsw.snapy.domain.albums.entity.DailyAlbumLike;
 import com.gbsw.snapy.domain.albums.repository.AlbumPhotoRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumLikeRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
@@ -17,6 +19,7 @@ import com.gbsw.snapy.domain.photos.repository.PhotoRepository;
 import com.gbsw.snapy.domain.settings.entity.UserSetting;
 import com.gbsw.snapy.domain.settings.entity.Visibility;
 import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
+import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
@@ -33,6 +36,8 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -102,6 +107,37 @@ public class AlbumQueryService {
         long likeCount = dailyAlbumLikeRepository.countByAlbumId(album.getId());
         boolean liked = dailyAlbumLikeRepository.existsByAlbumIdAndUserId(album.getId(), userId);
         return AlbumDetailResponse.of(album, likeCount, liked, mapped);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AlbumLikeListResponse> getLikes(Long albumId, Long userId) {
+        dailyAlbumRepository.findById(albumId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+
+        List<DailyAlbumLike> likes = dailyAlbumLikeRepository.findByAlbumIdOrderByCreatedAtDesc(albumId);
+        if (likes.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> likeUserIds = likes.stream().map(DailyAlbumLike::getUserId).toList();
+        Map<Long, User> userMap = userRepository.findAllById(likeUserIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        List<AlbumLikeListResponse> result = new ArrayList<>();
+        for (DailyAlbumLike like : likes) {
+            User user = userMap.get(like.getUserId());
+            if (user == null) continue;
+
+            result.add(new AlbumLikeListResponse(
+                    user.getId(),
+                    user.getHandle(),
+                    user.getUsername(),
+                    user.getProfileImageUrl(),
+                    like.getCreatedAt()
+            ));
+        }
+
+        return result;
     }
 
     @Transactional(readOnly = true)
