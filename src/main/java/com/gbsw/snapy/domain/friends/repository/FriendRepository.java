@@ -3,6 +3,7 @@ package com.gbsw.snapy.domain.friends.repository;
 import com.gbsw.snapy.domain.friends.entity.Friend;
 import com.gbsw.snapy.domain.friends.entity.FriendId;
 import com.gbsw.snapy.domain.friends.repository.projection.FriendUserProjection;
+import com.gbsw.snapy.domain.friends.repository.projection.RecommendedFriendProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -45,4 +46,18 @@ public interface FriendRepository extends JpaRepository<Friend, FriendId> {
                    "JOIN users u ON u.id = IF(f.user_a_id = :userId, f.user_b_id, f.user_a_id) " +
                    "WHERE (f.user_a_id = :userId OR f.user_b_id = :userId) AND u.deleted_at IS NULL", nativeQuery = true)
     List<Long> findFriendIdsByUserId(@Param("userId") Long userId);
+
+    @Query(value = "SELECT u.id AS id, u.handle AS handle, u.username AS username, " +
+                   "       u.profile_image_url AS profileImageUrl " +
+                   "FROM friends f " +
+                   "JOIN users u ON u.id = IF(f.user_a_id IN (:friendIds), f.user_b_id, f.user_a_id) " +
+                   "WHERE (f.user_a_id IN (:friendIds) OR f.user_b_id IN (:friendIds)) " +
+                   "  AND u.deleted_at IS NULL " +
+                   "  AND u.id <> :myId " +
+                   "GROUP BY u.id, u.handle, u.username, u.profile_image_url " +
+                   "ORDER BY COUNT(*) DESC, u.id ASC", nativeQuery = true)
+    List<RecommendedFriendProjection> findRecommendationCandidates(
+            @Param("friendIds") List<Long> friendIds,
+            @Param("myId") Long myId
+    );
 }
