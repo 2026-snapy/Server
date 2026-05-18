@@ -73,30 +73,7 @@ public class AlbumQueryService {
         DailyAlbum album = dailyAlbumRepository.findById(albumId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
 
-        if (!album.getUserId().equals(userId)) {
-            if (album.getStatus() != AlbumStatus.PUBLISHED) {
-                throw new CustomException(ErrorCode.ACCESS_DENIED);
-            }
-
-            YearMonth albumMonth = YearMonth.from(album.getAlbumDate());
-            YearMonth currentMonth = YearMonth.now(KST_ZONE);
-            boolean isCurrentMonth = albumMonth.equals(currentMonth);
-
-            UserSetting setting = userSettingRepository.findById(album.getUserId()).orElse(null);
-
-            Visibility v;
-            if (isCurrentMonth) {
-                v = (setting != null) ? setting.getFeedVisibility() : Visibility.FRIENDS_ONLY;
-            } else {
-                v = (setting != null) ? setting.getPastAlbumVisibility() : Visibility.FRIENDS_ONLY;
-                if (v == Visibility.ONLY_ME) {
-                    throw new CustomException(ErrorCode.ACCESS_DENIED);
-                }
-            }
-            if (v == Visibility.FRIENDS_ONLY && !friendRepository.existsFriendship(userId, album.getUserId())) {
-                throw new CustomException(ErrorCode.ACCESS_DENIED);
-            }
-        }
+        validateAlbumReadable(album, userId);
 
         LocalDateTime snapshotBoundary = album.getUserId().equals(userId) ? null : album.getPublishedAt();
         List<PhotoSetView> sets = loadPhotoSets(album.getId(), snapshotBoundary);
@@ -111,8 +88,9 @@ public class AlbumQueryService {
 
     @Transactional(readOnly = true)
     public List<AlbumLikeListResponse> getLikes(Long albumId, Long userId) {
-        dailyAlbumRepository.findById(albumId)
+        DailyAlbum album = dailyAlbumRepository.findById(albumId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+        validateAlbumReadable(album, userId);
 
         List<DailyAlbumLike> likes = dailyAlbumLikeRepository.findByAlbumIdOrderByCreatedAtDesc(albumId);
         if (likes.isEmpty()) {
@@ -138,6 +116,36 @@ public class AlbumQueryService {
         }
 
         return result;
+    }
+
+    private void validateAlbumReadable(DailyAlbum album, Long userId) {
+        if (album.getUserId().equals(userId)) {
+            return;
+        }
+
+        if (album.getStatus() != AlbumStatus.PUBLISHED) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        YearMonth albumMonth = YearMonth.from(album.getAlbumDate());
+        YearMonth currentMonth = YearMonth.now(KST_ZONE);
+        boolean isCurrentMonth = albumMonth.equals(currentMonth);
+
+        UserSetting setting = userSettingRepository.findById(album.getUserId()).orElse(null);
+
+        Visibility visibility;
+        if (isCurrentMonth) {
+            visibility = (setting != null) ? setting.getFeedVisibility() : Visibility.FRIENDS_ONLY;
+        } else {
+            visibility = (setting != null) ? setting.getPastAlbumVisibility() : Visibility.FRIENDS_ONLY;
+            if (visibility == Visibility.ONLY_ME) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+        }
+
+        if (visibility == Visibility.FRIENDS_ONLY && !friendRepository.existsFriendship(userId, album.getUserId())) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
     }
 
     @Transactional(readOnly = true)
