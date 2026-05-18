@@ -18,4 +18,8 @@ public interface FriendRequestRepository extends JpaRepository<FriendRequest, Lo
                    "FROM friend_requests fr JOIN users u ON fr.sender_id = u.id " +
                    "WHERE fr.receiver_id = :receiverId", nativeQuery = true)
     List<ReceivedFriendRequestProjection> findReceivedRequests(@Param("receiverId") Long receiverId);
+
+    @Query("SELECT CASE WHEN fr.senderId = :userId THEN fr.receiverId ELSE fr.senderId END " +
+           "FROM FriendRequest fr WHERE fr.senderId = :userId OR fr.receiverId = :userId")
+    List<Long> findRequestPeerIds(@Param("userId") Long userId);
 }

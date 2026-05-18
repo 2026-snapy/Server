@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.users.repository;
 
 import com.gbsw.snapy.domain.auth.entity.OAuthProvider;
+import com.gbsw.snapy.domain.friends.repository.projection.RecommendedFriendProjection;
 import com.gbsw.snapy.domain.users.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,4 +28,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("select u.id from User u")
     List<Long> findAllIds();
+
+    @Query(value = "SELECT u.id AS id, u.handle AS handle, u.username AS username, " +
+                   "       u.profile_image_url AS profileImageUrl " +
+                   "FROM users u " +
+                   "WHERE u.deleted_at IS NULL " +
+                   "  AND u.id <> :myId " +
+                   "  AND u.id NOT IN (:excludeIds) " +
+                   "ORDER BY RAND() " +
+                   "LIMIT :limit", nativeQuery = true)
+    List<RecommendedFriendProjection> findRandomActiveUsers(
+            @Param("myId") Long myId,
+            @Param("excludeIds") List<Long> excludeIds,
+            @Param("limit") int limit
+    );
 }
