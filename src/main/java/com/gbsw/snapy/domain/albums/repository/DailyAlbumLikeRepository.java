@@ -21,6 +21,8 @@ public interface DailyAlbumLikeRepository extends JpaRepository<DailyAlbumLike, 
 
     List<DailyAlbumLike> findByAlbumIdInAndUserId(Collection<Long> albumIds, Long userId);
 
+    List<DailyAlbumLike> findByAlbumIdOrderByCreatedAtDesc(Long albumId);
+
     @Query("SELECT l.albumId AS albumId, COUNT(l) AS count " +
             "FROM DailyAlbumLike l WHERE l.albumId IN :albumIds GROUP BY l.albumId")
     List<AlbumLikeCountProjection> countByAlbumIdIn(@Param("albumIds") Collection<Long> albumIds);
