@@ -5,11 +5,13 @@ import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
 import com.gbsw.snapy.domain.users.entity.User;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record FeedItemResponse(
         Long albumId,
         LocalDate albumDate,
+        LocalDateTime publishedAt,
         int photoCount,
         long likeCount,
         boolean liked,
@@ -22,6 +24,7 @@ public record FeedItemResponse(
         return new FeedItemResponse(
                 album.getId(),
                 album.getAlbumDate(),
+                album.getPublishedAt(),
                 album.getPhotoCount(),
                 likeCount,
                 liked,
