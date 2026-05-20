@@ -11,6 +11,7 @@ import com.gbsw.snapy.domain.users.dto.response.UserSearchResponse;
 import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.auth.repository.RefreshTokenRepository;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
+import com.gbsw.snapy.domain.blocks.repository.UserBlockRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.domain.phone.service.PhoneVerificationService;
 import com.gbsw.snapy.domain.streaks.service.StreakService;
@@ -30,17 +31,26 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final FriendRepository friendRepository;
+    private final UserBlockRepository userBlockRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final S3Service s3Service;
     private final StreakService streakService;
     private final PhoneVerificationService phoneVerificationService;
 
-    public UserProfileResponse getProfile(String handle) {
+    public UserProfileResponse getProfile(String handle, Long viewerId) {
         User user = userRepository.findByHandleAndDeletedAtIsNull(handle)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         long friendCount = friendRepository.countFriendsByUserId(user.getId());
         StreakService.StreakSummary streak = streakService.getSummary(user.getId());
-        return UserProfileResponse.from(user, friendCount, streak.current(), streak.max());
+
+        boolean blocked = false;
+        boolean blockedBy = false;
+        if (!viewerId.equals(user.getId())) {
+            blocked = userBlockRepository.existsById_UserIdAndId_TargetUserId(viewerId, user.getId());
+            blockedBy = userBlockRepository.existsById_UserIdAndId_TargetUserId(user.getId(), viewerId);
+        }
+
+        return UserProfileResponse.from(user, friendCount, streak.current(), streak.max(), blocked, blockedBy);
     }
 
     public UserProfileResponse getMyProfile(Long userId) {
@@ -48,7 +58,7 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         long friendCount = friendRepository.countFriendsByUserId(userId);
         StreakService.StreakSummary streak = streakService.getSummary(userId);
-        return UserProfileResponse.from(user, friendCount, streak.current(), streak.max());
+        return UserProfileResponse.from(user, friendCount, streak.current(), streak.max(), false, false);
     }
 
     public UpdateBackgroundImageResponse updateBackgroundImage(Long userId, MultipartFile file) {

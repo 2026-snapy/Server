@@ -35,9 +35,10 @@ public class CommentController {
     public ResponseEntity<ApiResponse<CursorResponse<CommentResponse>>> getComments(
             @PathVariable Long albumId,
             @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        CursorResponse<CommentResponse> response = commentService.getComments(albumId, cursor, size);
+        CursorResponse<CommentResponse> response = commentService.getComments(albumId, cursor, size, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
