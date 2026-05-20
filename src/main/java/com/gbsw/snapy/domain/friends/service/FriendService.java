@@ -219,8 +219,7 @@ public class FriendService {
         if (action == Action.APPROVE) {
             if (userBlockRepository.existsBlockBetween(request.getSenderId(), request.getReceiverId())) {
                 friendRequestRepository.delete(request);
-
-                throw new  CustomException(ErrorCode.ACCESS_DENIED);
+                return;
             }
 
             Long userAId = Math.min(request.getSenderId(), request.getReceiverId());
