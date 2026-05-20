@@ -29,6 +29,11 @@ public interface UserBlockRepository extends JpaRepository<UserBlock, UserBlockI
     List<Long> findBlockRelatedUserIds(@Param("userId") Long userId,
                                        @Param("candidates") java.util.Collection<Long> candidates);
 
+    @Query("SELECT CASE WHEN b.id.userId = :userId THEN b.id.targetUserId ELSE b.id.userId END " +
+           "FROM UserBlock b " +
+           "WHERE b.id.userId = :userId OR b.id.targetUserId = :userId")
+    List<Long> findAllBlockRelatedUserIds(@Param("userId") Long userId);
+
     @Query(value = "SELECT u.handle AS handle, u.username AS username, " +
                    "       u.profile_image_url AS profileImageUrl, b.blocked_at AS blockedAt " +
                    "FROM user_blocks b JOIN users u ON u.id = b.target_user_id " +

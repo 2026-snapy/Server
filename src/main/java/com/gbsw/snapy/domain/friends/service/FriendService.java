@@ -117,9 +117,13 @@ public class FriendService {
         // 보냈거나 받은 친구 신청의 상대 ID — 양방향 모두 추천 제외 대상
         List<Long> requestPeerIds = friendRequestRepository.findRequestPeerIds(myId);
 
-        // 친구 + 보냈거나 받은 친구 신청 유저 ID 제외
+        // 차단했거나 차단당한 유저 ID — 추천에서 제외
+        List<Long> blockedIds = userBlockRepository.findAllBlockRelatedUserIds(myId);
+
+        // 친구 + 보냈거나 받은 친구 신청 + 차단 관계 유저 ID 제외
         Set<Long> excludeIds = new HashSet<>(friendIds);
         excludeIds.addAll(requestPeerIds);
+        excludeIds.addAll(blockedIds);
 
         List<FriendResponse> result = new ArrayList<>();
         // 이미 추천 목록에 담은 유저 ID — 랜덤 보충 단계에서 중복으로 노출되지 않도록 추적
