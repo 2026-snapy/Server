@@ -17,6 +17,18 @@ public interface UserBlockRepository extends JpaRepository<UserBlock, UserBlockI
 
     void deleteById_UserIdAndId_TargetUserId(Long userId, Long targetUserId);
 
+    @Query("SELECT COUNT(b) > 0 FROM UserBlock b " +
+           "WHERE (b.id.userId = :userA AND b.id.targetUserId = :userB) " +
+           "   OR (b.id.userId = :userB AND b.id.targetUserId = :userA)")
+    boolean existsBlockBetween(@Param("userA") Long userA, @Param("userB") Long userB);
+
+    @Query("SELECT CASE WHEN b.id.userId = :userId THEN b.id.targetUserId ELSE b.id.userId END " +
+           "FROM UserBlock b " +
+           "WHERE (b.id.userId = :userId AND b.id.targetUserId IN :candidates) " +
+           "   OR (b.id.targetUserId = :userId AND b.id.userId IN :candidates)")
+    List<Long> findBlockRelatedUserIds(@Param("userId") Long userId,
+                                       @Param("candidates") java.util.Collection<Long> candidates);
+
     @Query(value = "SELECT u.handle AS handle, u.username AS username, " +
                    "       u.profile_image_url AS profileImageUrl, b.blocked_at AS blockedAt " +
                    "FROM user_blocks b JOIN users u ON u.id = b.target_user_id " +

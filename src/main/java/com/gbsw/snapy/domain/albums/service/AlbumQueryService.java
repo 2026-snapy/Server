@@ -12,6 +12,7 @@ import com.gbsw.snapy.domain.albums.entity.DailyAlbumLike;
 import com.gbsw.snapy.domain.albums.repository.AlbumPhotoRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumLikeRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
+import com.gbsw.snapy.domain.blocks.repository.UserBlockRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.domain.photos.entity.Photo;
 import com.gbsw.snapy.domain.photos.entity.PhotoType;
@@ -49,6 +50,7 @@ public class AlbumQueryService {
     private final PhotoRepository photoRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
+    private final UserBlockRepository userBlockRepository;
     private final UserRepository userRepository;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
@@ -123,6 +125,10 @@ public class AlbumQueryService {
             return;
         }
 
+        if (userBlockRepository.existsBlockBetween(userId, album.getUserId())) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
         if (album.getStatus() != AlbumStatus.PUBLISHED) {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
@@ -168,6 +174,10 @@ public class AlbumQueryService {
         boolean isCurrentMonth = YearMonth.of(year, month).equals(currentMonth);
 
         if (!isOwner) {
+            if (userBlockRepository.existsBlockBetween(requesterId, targetUserId)) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+
             UserSetting setting = userSettingRepository.findById(targetUserId).orElse(null);
 
             if (isCurrentMonth) {

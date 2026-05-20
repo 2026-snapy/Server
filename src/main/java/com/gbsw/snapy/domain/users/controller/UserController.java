@@ -115,9 +115,10 @@ public class UserController {
 
     @GetMapping("/{handle}")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getProfile(
-            @PathVariable String handle
+            @PathVariable String handle,
+            @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        UserProfileResponse response = userService.getProfile(handle);
+        UserProfileResponse response = userService.getProfile(handle, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

@@ -9,9 +9,18 @@ public record UserProfileResponse(
         String backgroundImageUrl,
         long friendCount,
         int currentStreak,
-        int maxStreak
+        int maxStreak,
+        boolean blocked,
+        boolean blockedBy
 ) {
-    public static UserProfileResponse from(User user, long friendCount, int currentStreak, int maxStreak) {
+    public static UserProfileResponse from(
+            User user,
+            long friendCount,
+            int currentStreak,
+            int maxStreak,
+            boolean blocked,
+            boolean blockedBy
+    ) {
         return new UserProfileResponse(
                 user.getHandle(),
                 user.getUsername(),
@@ -19,7 +28,9 @@ public record UserProfileResponse(
                 user.getBackGroundImageUrl(),
                 friendCount,
                 currentStreak,
-                maxStreak
+                maxStreak,
+                blocked,
+                blockedBy
         );
     }
 }
