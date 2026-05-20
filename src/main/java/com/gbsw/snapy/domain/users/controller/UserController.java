@@ -115,9 +115,10 @@ public class UserController {
 
     @GetMapping("/{handle}")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getProfile(
-            @PathVariable String handle
+            @PathVariable String handle,
+            @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        UserProfileResponse response = userService.getProfile(handle);
+        UserProfileResponse response = userService.getProfile(handle, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -133,9 +134,10 @@ public class UserController {
 
     @GetMapping("/{handle}/guestbook")
     public ResponseEntity<ApiResponse<List<GuestBookResponse>>> getGuestBook(
-            @PathVariable String handle
+            @PathVariable String handle,
+            @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
-        List<GuestBookResponse> response = guestBookService.getGuestBook(handle);
+        List<GuestBookResponse> response = guestBookService.getGuestBook(handle, principal.getId());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

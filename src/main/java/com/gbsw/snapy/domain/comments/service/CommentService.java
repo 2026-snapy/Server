@@ -6,6 +6,7 @@ import com.gbsw.snapy.domain.audios.dto.response.AudioUploadResponse;
 import com.gbsw.snapy.domain.audios.entity.Audio;
 import com.gbsw.snapy.domain.audios.repository.AudioRepository;
 import com.gbsw.snapy.domain.audios.service.AudioService;
+import com.gbsw.snapy.domain.blocks.repository.UserBlockRepository;
 import com.gbsw.snapy.domain.comments.dto.request.CommentUploadRequest;
 import com.gbsw.snapy.domain.comments.dto.response.CommentResponse;
 import com.gbsw.snapy.domain.comments.dto.response.CommentUploadResponse;
@@ -30,7 +31,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,12 +50,18 @@ public class CommentService {
     private final DailyAlbumRepository dailyAlbumRepository;
     private final PhotoRepository photoRepository;
     private final AudioRepository audioRepository;
+    private final UserBlockRepository userBlockRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public CommentUploadResponse upload(Long albumId, Long userId, CommentUploadRequest request) {
         DailyAlbum album = dailyAlbumRepository.findById(albumId)
                 .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+
+        if (!album.getUserId().equals(userId)
+                && userBlockRepository.existsBlockBetween(userId, album.getUserId())) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
@@ -101,9 +111,13 @@ public class CommentService {
     }
 
     @Transactional(readOnly = true)
-    public CursorResponse<CommentResponse> getComments(Long albumId, Long cursor, int size) {
-        if (!dailyAlbumRepository.existsById(albumId)) {
-            throw new CustomException(ErrorCode.ALBUM_NOT_FOUND);
+    public CursorResponse<CommentResponse> getComments(Long albumId, Long cursor, int size, Long viewerId) {
+        DailyAlbum album = dailyAlbumRepository.findById(albumId)
+                .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
+
+        if (!album.getUserId().equals(viewerId)
+                && userBlockRepository.existsBlockBetween(viewerId, album.getUserId())) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
         List<Comment> comments = (cursor == null)
@@ -115,7 +129,20 @@ public class CommentService {
             comments = comments.subList(0, size);
         }
 
-        List<CommentResponse> content = comments.stream()
+        // 댓글 중 차단 관계인 사람의 댓글 필터링
+        Set<Long> commentUserIds = comments.stream()
+                .map(c -> c.getUser().getId())
+                .filter(id -> !id.equals(viewerId))
+                .collect(Collectors.toSet());
+        Set<Long> blockedUserIds = commentUserIds.isEmpty()
+                ? Set.of()
+                : new HashSet<>(userBlockRepository.findBlockRelatedUserIds(viewerId, commentUserIds));
+
+        List<Comment> visibleComments = comments.stream()
+                .filter(c -> !blockedUserIds.contains(c.getUser().getId()))
+                .toList();
+
+        List<CommentResponse> content = visibleComments.stream()
                 .map(CommentResponse::from)
                 .toList();
 

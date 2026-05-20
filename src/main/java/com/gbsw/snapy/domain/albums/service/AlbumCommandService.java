@@ -12,6 +12,7 @@ import com.gbsw.snapy.domain.albums.entity.DailyAlbumLike;
 import com.gbsw.snapy.domain.albums.repository.AlbumPhotoRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumLikeRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
+import com.gbsw.snapy.domain.blocks.repository.UserBlockRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.domain.notifications.event.AlbumPublishedEvent;
 import com.gbsw.snapy.domain.notifications.event.FeedLikedEvent;
@@ -62,6 +63,7 @@ public class AlbumCommandService {
     private final StoryRepository storyRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
+    private final UserBlockRepository userBlockRepository;
     private final StreakService streakService;
     private final ApplicationEventPublisher eventPublisher;
     private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
@@ -208,6 +210,10 @@ public class AlbumCommandService {
                 .orElseThrow(() -> new CustomException(ErrorCode.ALBUM_NOT_FOUND));
 
         if (!album.getUserId().equals(userId)) {
+            if (userBlockRepository.existsBlockBetween(userId, album.getUserId())) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+
             if (album.getStatus() != AlbumStatus.PUBLISHED) {
                 throw new CustomException(ErrorCode.ACCESS_DENIED);
             }

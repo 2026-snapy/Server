@@ -75,6 +75,11 @@ public enum ErrorCode {
     FRIEND_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "친구 신청을 찾을 수 없습니다."),
     FRIEND_REQUEST_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 친구 신청에 대한 권한이 없습니다."),
 
+    // UserBlock
+    USER_BLOCK_SELF(HttpStatus.BAD_REQUEST, "자기 자신을 차단할 수 없습니다."),
+    ALREADY_BLOCKED(HttpStatus.CONFLICT, "이미 차단한 유저입니다."),
+    USER_BLOCK_NOT_FOUND(HttpStatus.NOT_FOUND, "차단 내역을 찾을 수 없습니다."),
+
     // Comment
     COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글을 찾을 수 없습니다."),
     INVALID_COMMENT_ATTACHMENT(HttpStatus.BAD_REQUEST, "댓글 첨부 데이터가 올바르지 않습니다."),

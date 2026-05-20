@@ -40,6 +40,7 @@ public class FeedService {
     private final UserRepository userRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
+    // private final UserBlockRepository userBlockRepository;
 
     private final AlbumQueryService albumQueryService;
 
@@ -74,11 +75,21 @@ public class FeedService {
         Map<Long, User> userById = userRepository.findAllById(ownerIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
+        // TODO: 만약 피드 리스트가 친구만 오는게 아니라면 주석을 해제 해야함.
+        // 차단 유저 조회 (내가 차단 한 유저, 나를 차단한 유저 피드 제외)
+        // Set<Long> blockedOwnerIds = otherOwnerIds.isEmpty()
+        //       ? Set.of()
+        //      : new HashSet<>(userBlockRepository.findBlockRelatedUserIds(userId, otherOwnerIds));
+
         List<DailyAlbum> visibleAlbums = orderedAlbums.stream()
                 .filter((a) -> {
                     if (a.getUserId().equals(userId)) {
                         return true;
                     }
+
+                    // if (blockedOwnerIds.contains(a.getUserId())) {
+                    //    return false;
+                    //}
 
                     YearMonth albumMonth = YearMonth.from(a.getAlbumDate());
                     YearMonth currentMonth = YearMonth.now(KST_ZONE);

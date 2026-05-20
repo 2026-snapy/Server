@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.stories.service;
 
 import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
+import com.gbsw.snapy.domain.blocks.repository.UserBlockRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.domain.photos.entity.Photo;
 import com.gbsw.snapy.domain.photos.entity.PhotoType;
@@ -46,6 +47,7 @@ public class StoryService {
     private final StoryPhotoRepository storyPhotoRepository;
     private final StoryLikeRepository storyLikeRepository;
     private final FriendRepository friendRepository;
+    private final UserBlockRepository userBlockRepository;
     private final UserRepository userRepository;
     private final PhotoRepository photoRepository;
     private final UserSettingRepository userSettingRepository;
@@ -182,6 +184,10 @@ public class StoryService {
 
         Long ownerId = story.getUserId();
         if (!ownerId.equals(userId)) {
+            if (userBlockRepository.existsBlockBetween(userId, ownerId)) {
+                throw new CustomException(ErrorCode.ACCESS_DENIED);
+            }
+
             Visibility feedVisibility = userSettingRepository.findById(ownerId)
                     .map(UserSetting::getFeedVisibility)
                     .orElse(Visibility.FRIENDS_ONLY);
@@ -258,6 +264,10 @@ public class StoryService {
         Long ownerId = story.getUserId();
         if (ownerId.equals(userId)) {
             throw new CustomException(ErrorCode.CANNOT_LIKE_OWN_STORY);
+        }
+
+        if (userBlockRepository.existsBlockBetween(userId, ownerId)) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
         Visibility feedVisibility = userSettingRepository.findById(ownerId)
