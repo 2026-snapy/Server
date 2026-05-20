@@ -8,6 +8,7 @@ import com.gbsw.snapy.domain.friends.dto.response.ReceivedFriendRequestResponse;
 import com.gbsw.snapy.domain.friends.entity.Friend;
 import com.gbsw.snapy.domain.friends.entity.FriendId;
 import com.gbsw.snapy.domain.friends.entity.FriendRequest;
+import com.gbsw.snapy.domain.blocks.repository.UserBlockRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
 import com.gbsw.snapy.domain.friends.repository.FriendRequestRepository;
 import com.gbsw.snapy.domain.friends.repository.projection.FriendUserProjection;
@@ -37,6 +38,7 @@ public class FriendService {
 
     private final FriendRequestRepository friendRequestRepository;
     private final FriendRepository friendRepository;
+    private final UserBlockRepository userBlockRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -47,6 +49,10 @@ public class FriendService {
 
         if (senderId.equals(receiver.getId())) {
             throw new CustomException(ErrorCode.FRIEND_REQUEST_SELF);
+        }
+
+        if (userBlockRepository.existsBlockBetween(senderId, receiver.getId())) {
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
         if (friendRepository.existsFriendship(senderId, receiver.getId())) {
