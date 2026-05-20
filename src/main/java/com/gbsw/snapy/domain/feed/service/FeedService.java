@@ -5,7 +5,6 @@ import com.gbsw.snapy.domain.albums.entity.DailyAlbum;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumLikeRepository;
 import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
 import com.gbsw.snapy.domain.albums.service.AlbumQueryService;
-import com.gbsw.snapy.domain.blocks.repository.UserBlockRepository;
 import com.gbsw.snapy.domain.feed.dto.request.FeedRecommendRequest;
 import com.gbsw.snapy.domain.feed.dto.response.FeedItemResponse;
 import com.gbsw.snapy.domain.friends.repository.FriendRepository;
@@ -41,7 +40,7 @@ public class FeedService {
     private final UserRepository userRepository;
     private final UserSettingRepository userSettingRepository;
     private final FriendRepository friendRepository;
-    private final UserBlockRepository userBlockRepository;
+    // private final UserBlockRepository userBlockRepository;
 
     private final AlbumQueryService albumQueryService;
 
@@ -76,10 +75,11 @@ public class FeedService {
         Map<Long, User> userById = userRepository.findAllById(ownerIds).stream()
                 .collect(Collectors.toMap(User::getId, Function.identity()));
 
-        // 차단 유저 조회 (내가 차단 한 유저, 나를 차단한 유저 피드 제외 )
-        Set<Long> blockedOwnerIds = otherOwnerIds.isEmpty()
-                ? Set.of()
-                : new HashSet<>(userBlockRepository.findBlockRelatedUserIds(userId, otherOwnerIds));
+        // TODO: 만약 피드 리스트가 친구만 오는게 아니라면 주석을 해제 해야함.
+        // 차단 유저 조회 (내가 차단 한 유저, 나를 차단한 유저 피드 제외)
+        // Set<Long> blockedOwnerIds = otherOwnerIds.isEmpty()
+        //       ? Set.of()
+        //      : new HashSet<>(userBlockRepository.findBlockRelatedUserIds(userId, otherOwnerIds));
 
         List<DailyAlbum> visibleAlbums = orderedAlbums.stream()
                 .filter((a) -> {
@@ -87,9 +87,9 @@ public class FeedService {
                         return true;
                     }
 
-                    if (blockedOwnerIds.contains(a.getUserId())) {
-                        return false;
-                    }
+                    // if (blockedOwnerIds.contains(a.getUserId())) {
+                    //    return false;
+                    //}
 
                     YearMonth albumMonth = YearMonth.from(a.getAlbumDate());
                     YearMonth currentMonth = YearMonth.now(KST_ZONE);
