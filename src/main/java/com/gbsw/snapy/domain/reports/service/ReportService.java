@@ -31,7 +31,7 @@ public class ReportService {
                 .reporterId(reporterId)
                 .targetType(request.targetType())
                 .targetId(resolveTargetId(request))
-                .targetHandle(resolveTargetHandle(request))
+                .userHandle(resolveUserHandle(request))
                 .reason(request.reason())
                 .build());
 
@@ -51,7 +51,7 @@ public class ReportService {
     }
 
     private String normalizeTargetHandle(ReportCreateRequest request) {
-        return request.targetHandle() == null ? null : request.targetHandle().trim();
+        return request.userHandle() == null ? null : request.userHandle().trim();
     }
 
     private Long resolveTargetId(ReportCreateRequest request) {
@@ -60,7 +60,7 @@ public class ReportService {
                 : request.targetId();
     }
 
-    private String resolveTargetHandle(ReportCreateRequest request) {
+    private String resolveUserHandle(ReportCreateRequest request) {
         return request.targetType() == ReportTargetType.PROFILE
                 ? normalizeTargetHandle(request)
                 : null;

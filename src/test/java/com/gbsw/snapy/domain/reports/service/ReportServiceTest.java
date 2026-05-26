@@ -65,11 +65,11 @@ class ReportServiceTest {
         assertThat(report.getReporterId()).isEqualTo(1L);
         assertThat(report.getTargetType()).isEqualTo(ReportTargetType.FEED);
         assertThat(report.getTargetId()).isEqualTo(10L);
-        assertThat(report.getTargetHandle()).isNull();
+        assertThat(report.getUserHandle()).isNull();
         assertThat(report.getReason()).isEqualTo(ReportReason.SPAM_OR_SCAM);
         assertThat(response.targetType()).isEqualTo(ReportTargetType.FEED);
         assertThat(response.targetId()).isEqualTo(10L);
-        assertThat(response.targetHandle()).isNull();
+        assertThat(response.userHandle()).isNull();
         assertThat(response.reason()).isEqualTo(ReportReason.SPAM_OR_SCAM);
     }
 
@@ -107,10 +107,46 @@ class ReportServiceTest {
         ArgumentCaptor<Report> captor = ArgumentCaptor.forClass(Report.class);
         verify(reportRepository).save(captor.capture());
         assertThat(captor.getValue().getTargetId()).isNull();
-        assertThat(captor.getValue().getTargetHandle()).isEqualTo("snapy");
+        assertThat(captor.getValue().getUserHandle()).isEqualTo("snapy");
         assertThat(response.targetType()).isEqualTo(ReportTargetType.PROFILE);
         assertThat(response.targetId()).isNull();
-        assertThat(response.targetHandle()).isEqualTo("snapy");
+        assertThat(response.userHandle()).isEqualTo("snapy");
+    }
+
+    @Test
+    void createTrimsProfileUserHandle() {
+        ReportCreateRequest request = new ReportCreateRequest(
+                ReportTargetType.PROFILE,
+                null,
+                " snapy ",
+                ReportReason.OTHER
+        );
+        when(userRepository.findByHandleAndDeletedAtIsNull("snapy")).thenReturn(Optional.of(new User()));
+        when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        ReportCreateResponse response = reportService.create(1L, request);
+
+        ArgumentCaptor<Report> captor = ArgumentCaptor.forClass(Report.class);
+        verify(reportRepository).save(captor.capture());
+        assertThat(captor.getValue().getUserHandle()).isEqualTo("snapy");
+        assertThat(response.userHandle()).isEqualTo("snapy");
+    }
+
+    @Test
+    void createThrowsWhenProfileUserHandleDoesNotExist() {
+        ReportCreateRequest request = new ReportCreateRequest(
+                ReportTargetType.PROFILE,
+                null,
+                "unknown",
+                ReportReason.OTHER
+        );
+        when(userRepository.findByHandleAndDeletedAtIsNull("unknown")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> reportService.create(1L, request))
+                .isInstanceOf(CustomException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.REPORT_TARGET_NOT_FOUND);
+        verify(reportRepository, never()).save(any(Report.class));
     }
 
     @Test

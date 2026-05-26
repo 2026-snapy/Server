@@ -39,8 +39,8 @@ public class Report {
     @Column(name = "target_id")
     private Long targetId;
 
-    @Column(name = "target_handle", length = 25)
-    private String targetHandle;
+    @Column(name = "user_handle", length = 25)
+    private String userHandle;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
