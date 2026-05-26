@@ -7,6 +7,7 @@ import com.gbsw.snapy.domain.reports.entity.Report;
 import com.gbsw.snapy.domain.reports.entity.ReportTargetType;
 import com.gbsw.snapy.domain.reports.repository.ReportRepository;
 import com.gbsw.snapy.domain.stories.repository.StoryRepository;
+import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
@@ -25,12 +26,12 @@ public class ReportService {
 
     @Transactional
     public ReportCreateResponse create(Long reporterId, ReportCreateRequest request) {
-        validateTargetExists(request);
+        User profileTarget = validateTargetExists(request);
 
         Report report = reportRepository.save(Report.builder()
                 .reporterId(reporterId)
                 .targetType(request.targetType())
-                .targetId(resolveTargetId(request))
+                .targetId(resolveTargetId(request, profileTarget))
                 .userHandle(resolveUserHandle(request))
                 .reason(request.reason())
                 .build());
@@ -38,25 +39,32 @@ public class ReportService {
         return ReportCreateResponse.from(report);
     }
 
-    private void validateTargetExists(ReportCreateRequest request) {
-        boolean exists = switch (request.targetType()) {
-            case FEED -> dailyAlbumRepository.existsById(request.targetId());
-            case STORY -> storyRepository.existsById(request.targetId());
-            case PROFILE -> userRepository.findByHandleAndDeletedAtIsNull(normalizeTargetHandle(request)).isPresent();
+    private User validateTargetExists(ReportCreateRequest request) {
+        return switch (request.targetType()) {
+            case FEED -> {
+                if (!dailyAlbumRepository.existsById(request.targetId())) {
+                    throw new CustomException(ErrorCode.REPORT_TARGET_NOT_FOUND);
+                }
+                yield null;
+            }
+            case STORY -> {
+                if (!storyRepository.existsById(request.targetId())) {
+                    throw new CustomException(ErrorCode.REPORT_TARGET_NOT_FOUND);
+                }
+                yield null;
+            }
+            case PROFILE -> userRepository.findByHandleAndDeletedAtIsNull(normalizeTargetHandle(request))
+                    .orElseThrow(() -> new CustomException(ErrorCode.REPORT_TARGET_NOT_FOUND));
         };
-
-        if (!exists) {
-            throw new CustomException(ErrorCode.REPORT_TARGET_NOT_FOUND);
-        }
     }
 
     private String normalizeTargetHandle(ReportCreateRequest request) {
         return request.userHandle() == null ? null : request.userHandle().trim();
     }
 
-    private Long resolveTargetId(ReportCreateRequest request) {
+    private Long resolveTargetId(ReportCreateRequest request, User profileTarget) {
         return request.targetType() == ReportTargetType.PROFILE
-                ? null
+                ? profileTarget.getId()
                 : request.targetId();
     }
 
