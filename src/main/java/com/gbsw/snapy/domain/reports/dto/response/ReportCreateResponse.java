@@ -15,7 +15,7 @@ public record ReportCreateResponse(
         return new ReportCreateResponse(
                 report.getId(),
                 report.getTargetType(),
-                report.getTargetId(),
+                report.getTargetType() == ReportTargetType.PROFILE ? null : report.getTargetId(),
                 report.getUserHandle(),
                 report.getReason()
         );

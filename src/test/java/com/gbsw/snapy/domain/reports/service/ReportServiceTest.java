@@ -99,14 +99,14 @@ class ReportServiceTest {
                 "snapy",
                 ReportReason.OTHER
         );
-        when(userRepository.findByHandleAndDeletedAtIsNull("snapy")).thenReturn(Optional.of(new User()));
+        when(userRepository.findByHandleAndDeletedAtIsNull("snapy")).thenReturn(Optional.of(User.builder().id(30L).build()));
         when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ReportCreateResponse response = reportService.create(1L, request);
 
         ArgumentCaptor<Report> captor = ArgumentCaptor.forClass(Report.class);
         verify(reportRepository).save(captor.capture());
-        assertThat(captor.getValue().getTargetId()).isNull();
+        assertThat(captor.getValue().getTargetId()).isEqualTo(30L);
         assertThat(captor.getValue().getUserHandle()).isEqualTo("snapy");
         assertThat(response.targetType()).isEqualTo(ReportTargetType.PROFILE);
         assertThat(response.targetId()).isNull();
@@ -121,13 +121,14 @@ class ReportServiceTest {
                 " snapy ",
                 ReportReason.OTHER
         );
-        when(userRepository.findByHandleAndDeletedAtIsNull("snapy")).thenReturn(Optional.of(new User()));
+        when(userRepository.findByHandleAndDeletedAtIsNull("snapy")).thenReturn(Optional.of(User.builder().id(30L).build()));
         when(reportRepository.save(any(Report.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ReportCreateResponse response = reportService.create(1L, request);
 
         ArgumentCaptor<Report> captor = ArgumentCaptor.forClass(Report.class);
         verify(reportRepository).save(captor.capture());
+        assertThat(captor.getValue().getTargetId()).isEqualTo(30L);
         assertThat(captor.getValue().getUserHandle()).isEqualTo("snapy");
         assertThat(response.userHandle()).isEqualTo("snapy");
     }
