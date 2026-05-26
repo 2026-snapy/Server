@@ -36,8 +36,11 @@ public class Report {
     @Column(name = "target_type", nullable = false, length = 20)
     private ReportTargetType targetType;
 
-    @Column(name = "target_id", nullable = false)
+    @Column(name = "target_id")
     private Long targetId;
+
+    @Column(name = "target_handle", length = 25)
+    private String targetHandle;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
