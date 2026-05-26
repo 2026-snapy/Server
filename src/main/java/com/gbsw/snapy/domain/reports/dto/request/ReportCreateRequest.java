@@ -14,8 +14,8 @@ public record ReportCreateRequest(
         @Positive(message = "신고 대상 ID는 양수여야 합니다.")
         Long targetId,
 
-        @Size(max = 25, message = "신고 대상 핸들은 25자를 초과할 수 없습니다.")
-        String targetHandle,
+        @Size(max = 25, message = "신고 대상 유저 핸들은 25자를 초과할 수 없습니다.")
+        String userHandle,
 
         @NotNull(message = "신고 사유는 필수입니다.")
         ReportReason reason
@@ -27,7 +27,7 @@ public record ReportCreateRequest(
         }
 
         if (targetType == ReportTargetType.PROFILE) {
-            return targetHandle != null && !targetHandle.isBlank();
+            return userHandle != null && !userHandle.isBlank();
         }
 
         return targetId != null;

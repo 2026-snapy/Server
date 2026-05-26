@@ -40,7 +40,7 @@ public class Report {
     private Long targetId;
 
     @Column(name = "target_handle", length = 25)
-    private String targetHandle;
+    private String userHandle;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
