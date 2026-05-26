@@ -17,6 +17,7 @@ import com.gbsw.snapy.domain.phone.service.PhoneVerificationService;
 import com.gbsw.snapy.domain.streaks.service.StreakService;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
+import com.gbsw.snapy.global.filter.BannedWordFilter;
 import com.gbsw.snapy.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ public class UserService {
     private final S3Service s3Service;
     private final StreakService streakService;
     private final PhoneVerificationService phoneVerificationService;
+    private final BannedWordFilter bannedWordFilter;
 
     public UserProfileResponse getProfile(String handle, Long viewerId) {
         User user = userRepository.findByHandleAndDeletedAtIsNull(handle)
@@ -145,12 +147,18 @@ public class UserService {
     }
 
     public CheckHandleResponse checkHandle(String handle) {
+        if (bannedWordFilter.containsBannedWord(handle)) {
+            throw new CustomException(ErrorCode.HANDLE_CONTAINS_BANNED_WORD);
+        }
         boolean available = !userRepository.existsByHandle(handle);
         return new CheckHandleResponse(available);
     }
 
     @Transactional
     public void updateHandle(Long userId, UpdateHandleRequest request) {
+        if (bannedWordFilter.containsBannedWord(request.getHandle())) {
+            throw new CustomException(ErrorCode.HANDLE_CONTAINS_BANNED_WORD);
+        }
         if (userRepository.existsByHandle(request.getHandle())) {
             throw new CustomException(ErrorCode.DUPLICATE_HANDLE);
         }

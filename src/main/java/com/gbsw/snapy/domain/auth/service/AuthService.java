@@ -13,6 +13,7 @@ import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
+import com.gbsw.snapy.global.filter.BannedWordFilter;
 import com.gbsw.snapy.global.security.jwt.JwtProperties;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -33,9 +34,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final JwtProperties jwtProperties;
+    private final BannedWordFilter bannedWordFilter;
 
     @Transactional
     public RegisterResponse register(RegisterRequest dto) {
+        if (bannedWordFilter.containsBannedWord(dto.getHandle())) {
+            throw new CustomException(ErrorCode.HANDLE_CONTAINS_BANNED_WORD);
+        }
         if (userRepository.existsByHandle(dto.getHandle())) {
             throw new CustomException(ErrorCode.DUPLICATE_HANDLE);
         }
