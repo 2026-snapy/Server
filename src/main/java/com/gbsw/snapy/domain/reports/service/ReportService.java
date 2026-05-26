@@ -4,6 +4,7 @@ import com.gbsw.snapy.domain.albums.repository.DailyAlbumRepository;
 import com.gbsw.snapy.domain.reports.dto.request.ReportCreateRequest;
 import com.gbsw.snapy.domain.reports.dto.response.ReportCreateResponse;
 import com.gbsw.snapy.domain.reports.entity.Report;
+import com.gbsw.snapy.domain.reports.entity.ReportTargetType;
 import com.gbsw.snapy.domain.reports.repository.ReportRepository;
 import com.gbsw.snapy.domain.stories.repository.StoryRepository;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
@@ -29,7 +30,8 @@ public class ReportService {
         Report report = reportRepository.save(Report.builder()
                 .reporterId(reporterId)
                 .targetType(request.targetType())
-                .targetId(request.targetId())
+                .targetId(resolveTargetId(request))
+                .targetHandle(resolveTargetHandle(request))
                 .reason(request.reason())
                 .build());
 
@@ -40,11 +42,27 @@ public class ReportService {
         boolean exists = switch (request.targetType()) {
             case FEED -> dailyAlbumRepository.existsById(request.targetId());
             case STORY -> storyRepository.existsById(request.targetId());
-            case PROFILE -> userRepository.existsById(request.targetId());
+            case PROFILE -> userRepository.findByHandleAndDeletedAtIsNull(normalizeTargetHandle(request)).isPresent();
         };
 
         if (!exists) {
             throw new CustomException(ErrorCode.REPORT_TARGET_NOT_FOUND);
         }
+    }
+
+    private String normalizeTargetHandle(ReportCreateRequest request) {
+        return request.targetHandle() == null ? null : request.targetHandle().trim();
+    }
+
+    private Long resolveTargetId(ReportCreateRequest request) {
+        return request.targetType() == ReportTargetType.PROFILE
+                ? null
+                : request.targetId();
+    }
+
+    private String resolveTargetHandle(ReportCreateRequest request) {
+        return request.targetType() == ReportTargetType.PROFILE
+                ? normalizeTargetHandle(request)
+                : null;
     }
 }

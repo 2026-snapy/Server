@@ -8,6 +8,7 @@ public record ReportCreateResponse(
         Long reportId,
         ReportTargetType targetType,
         Long targetId,
+        String targetHandle,
         ReportReason reason
 ) {
     public static ReportCreateResponse from(Report report) {
@@ -15,6 +16,7 @@ public record ReportCreateResponse(
                 report.getId(),
                 report.getTargetType(),
                 report.getTargetId(),
+                report.getTargetHandle(),
                 report.getReason()
         );
     }
