@@ -218,6 +218,7 @@ public class FriendService {
 
         if (action == Action.APPROVE) {
             if (userBlockRepository.existsBlockBetween(request.getSenderId(), request.getReceiverId())) {
+                // TODO: 사용자에게 거절되었다는 메세지 전송 필요
                 friendRequestRepository.delete(request);
                 return;
             }
