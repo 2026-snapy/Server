@@ -1,6 +1,9 @@
 package com.gbsw.snapy.domain.users.dto.response;
 
+import com.gbsw.snapy.domain.albums.dto.response.ProfilePastAlbumResponse;
 import com.gbsw.snapy.domain.users.entity.User;
+
+import java.util.List;
 
 public record UserProfileResponse(
         String handle,
@@ -11,7 +14,8 @@ public record UserProfileResponse(
         int currentStreak,
         int maxStreak,
         boolean blocked,
-        boolean blockedBy
+        boolean blockedBy,
+        List<ProfilePastAlbumResponse> pastAlbums
 ) {
     public static UserProfileResponse from(
             User user,
@@ -19,7 +23,8 @@ public record UserProfileResponse(
             int currentStreak,
             int maxStreak,
             boolean blocked,
-            boolean blockedBy
+            boolean blockedBy,
+            List<ProfilePastAlbumResponse> pastAlbums
     ) {
         return new UserProfileResponse(
                 user.getHandle(),
@@ -30,7 +35,8 @@ public record UserProfileResponse(
                 currentStreak,
                 maxStreak,
                 blocked,
-                blockedBy
+                blockedBy,
+                pastAlbums
         );
     }
 }

@@ -1,5 +1,7 @@
 package com.gbsw.snapy.domain.users.service;
 
+import com.gbsw.snapy.domain.albums.dto.response.ProfilePastAlbumResponse;
+import com.gbsw.snapy.domain.albums.service.AlbumQueryService;
 import com.gbsw.snapy.domain.users.dto.request.UpdateHandleRequest;
 import com.gbsw.snapy.domain.users.dto.request.UpdatePhoneRequest;
 import com.gbsw.snapy.domain.users.dto.request.UpdateUsernameRequest;
@@ -36,6 +38,7 @@ public class UserService {
     private final S3Service s3Service;
     private final StreakService streakService;
     private final PhoneVerificationService phoneVerificationService;
+    private final AlbumQueryService albumQueryService;
 
     public UserProfileResponse getProfile(String handle, Long viewerId) {
         User user = userRepository.findByHandleAndDeletedAtIsNull(handle)
@@ -50,7 +53,9 @@ public class UserService {
             blockedBy = userBlockRepository.existsById_UserIdAndId_TargetUserId(user.getId(), viewerId);
         }
 
-        return UserProfileResponse.from(user, friendCount, streak.current(), streak.max(), blocked, blockedBy);
+        List<ProfilePastAlbumResponse> pastAlbums = albumQueryService.getProfilePastAlbums(user.getId(), viewerId);
+        return UserProfileResponse.from(
+                user, friendCount, streak.current(), streak.max(), blocked, blockedBy, pastAlbums);
     }
 
     public UserProfileResponse getMyProfile(Long userId) {
@@ -58,7 +63,9 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
         long friendCount = friendRepository.countFriendsByUserId(userId);
         StreakService.StreakSummary streak = streakService.getSummary(userId);
-        return UserProfileResponse.from(user, friendCount, streak.current(), streak.max(), false, false);
+        List<ProfilePastAlbumResponse> pastAlbums = albumQueryService.getProfilePastAlbums(userId, userId);
+        return UserProfileResponse.from(
+                user, friendCount, streak.current(), streak.max(), false, false, pastAlbums);
     }
 
     public UpdateBackgroundImageResponse updateBackgroundImage(Long userId, MultipartFile file) {
