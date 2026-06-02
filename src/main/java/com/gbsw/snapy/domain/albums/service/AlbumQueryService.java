@@ -4,6 +4,7 @@ import com.gbsw.snapy.domain.albums.dto.response.AlbumDetailResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumLikeListResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumListResponse;
 import com.gbsw.snapy.domain.albums.dto.response.AlbumTodayResponse;
+import com.gbsw.snapy.domain.albums.dto.response.ProfilePastAlbumResponse;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhoto;
 import com.gbsw.snapy.domain.albums.entity.AlbumPhotoType;
 import com.gbsw.snapy.domain.albums.entity.AlbumStatus;
@@ -33,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -217,6 +219,49 @@ public class AlbumQueryService {
         List<DailyAlbum> albums = dailyAlbumRepository
                 .findByUserIdAndAlbumDateBetweenOrderByAlbumDateDesc(userId, fiveMonthsAgo, today);
         return buildAlbumListResponses(albums);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProfilePastAlbumResponse> getProfilePastAlbums(Long targetUserId, Long requesterId) {
+        YearMonth currentMonth = YearMonth.now(KST_ZONE);
+        YearMonth lastPastMonth = currentMonth.minusMonths(1);
+        if (lastPastMonth.isBefore(YearMonth.of(currentMonth.getYear(), 1))) {
+            return List.of();
+        }
+
+        if (!targetUserId.equals(requesterId)) {
+            if (userBlockRepository.existsBlockBetween(requesterId, targetUserId)) {
+                return List.of();
+            }
+
+            UserSetting setting = userSettingRepository.findById(targetUserId).orElse(null);
+            Visibility visibility = (setting != null) ? setting.getPastAlbumVisibility() : Visibility.FRIENDS_ONLY;
+            if (visibility == Visibility.ONLY_ME) {
+                return List.of();
+            }
+            if (visibility == Visibility.FRIENDS_ONLY
+                    && !friendRepository.existsFriendship(requesterId, targetUserId)) {
+                return List.of();
+            }
+        }
+
+        LocalDate start = YearMonth.of(currentMonth.getYear(), 1).atDay(1);
+        LocalDate end = lastPastMonth.atEndOfMonth();
+        List<DailyAlbum> albums = dailyAlbumRepository
+                .findByUserIdAndStatusAndAlbumDateBetweenOrderByAlbumDateDesc(
+                        targetUserId, AlbumStatus.PUBLISHED, start, end);
+        List<AlbumListResponse> albumResponses = buildAlbumListResponses(albums);
+
+        Map<YearMonth, ProfilePastAlbumResponse> pastAlbums = new LinkedHashMap<>();
+        for (AlbumListResponse album : albumResponses) {
+            YearMonth albumMonth = YearMonth.from(album.albumDate());
+            pastAlbums.putIfAbsent(albumMonth, new ProfilePastAlbumResponse(
+                    albumMonth.getYear(),
+                    albumMonth.getMonthValue(),
+                    album.thumbnailUrl()
+            ));
+        }
+        return new ArrayList<>(pastAlbums.values());
     }
 
     private List<AlbumListResponse> buildAlbumListResponses(List<DailyAlbum> albums) {
