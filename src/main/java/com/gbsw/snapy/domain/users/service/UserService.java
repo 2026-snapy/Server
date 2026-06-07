@@ -2,6 +2,9 @@ package com.gbsw.snapy.domain.users.service;
 
 import com.gbsw.snapy.domain.albums.dto.response.ProfilePastAlbumResponse;
 import com.gbsw.snapy.domain.albums.service.AlbumQueryService;
+import com.gbsw.snapy.domain.settings.entity.UserSetting;
+import com.gbsw.snapy.domain.settings.entity.Visibility;
+import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
 import com.gbsw.snapy.domain.users.dto.request.UpdateHandleRequest;
 import com.gbsw.snapy.domain.users.dto.request.UpdatePhoneRequest;
 import com.gbsw.snapy.domain.users.dto.request.UpdateUsernameRequest;
@@ -39,6 +42,7 @@ public class UserService {
     private final StreakService streakService;
     private final PhoneVerificationService phoneVerificationService;
     private final AlbumQueryService albumQueryService;
+    private final UserSettingRepository userSettingRepository;
 
     public UserProfileResponse getProfile(String handle, Long viewerId) {
         User user = userRepository.findByHandleAndDeletedAtIsNull(handle)
@@ -54,8 +58,10 @@ public class UserService {
         }
 
         List<ProfilePastAlbumResponse> pastAlbums = albumQueryService.getProfilePastAlbums(user.getId(), viewerId);
+        UserSetting setting = getUserSetting(user.getId());
         return UserProfileResponse.from(
-                user, friendCount, streak.current(), streak.max(), blocked, blockedBy, pastAlbums);
+                user, friendCount, streak.current(), streak.max(), blocked, blockedBy,
+                feedVisibility(setting), pastAlbumVisibility(setting), pastAlbums);
     }
 
     public UserProfileResponse getMyProfile(Long userId) {
@@ -64,8 +70,10 @@ public class UserService {
         long friendCount = friendRepository.countFriendsByUserId(userId);
         StreakService.StreakSummary streak = streakService.getSummary(userId);
         List<ProfilePastAlbumResponse> pastAlbums = albumQueryService.getProfilePastAlbums(userId, userId);
+        UserSetting setting = getUserSetting(userId);
         return UserProfileResponse.from(
-                user, friendCount, streak.current(), streak.max(), false, false, pastAlbums);
+                user, friendCount, streak.current(), streak.max(), false, false,
+                feedVisibility(setting), pastAlbumVisibility(setting), pastAlbums);
     }
 
     public UpdateBackgroundImageResponse updateBackgroundImage(Long userId, MultipartFile file) {
@@ -173,5 +181,17 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         user.setUsername(request.getUsername());
+    }
+
+    private UserSetting getUserSetting(Long userId) {
+        return userSettingRepository.findById(userId).orElse(null);
+    }
+
+    private Visibility feedVisibility(UserSetting setting) {
+        return setting != null ? setting.getFeedVisibility() : Visibility.FRIENDS_ONLY;
+    }
+
+    private Visibility pastAlbumVisibility(UserSetting setting) {
+        return setting != null ? setting.getPastAlbumVisibility() : Visibility.FRIENDS_ONLY;
     }
 }
