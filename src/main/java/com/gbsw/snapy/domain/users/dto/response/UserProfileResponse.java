@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.users.dto.response;
 
 import com.gbsw.snapy.domain.albums.dto.response.ProfilePastAlbumResponse;
+import com.gbsw.snapy.domain.settings.entity.Visibility;
 import com.gbsw.snapy.domain.users.entity.User;
 
 import java.util.List;
@@ -15,6 +16,8 @@ public record UserProfileResponse(
         int maxStreak,
         boolean blocked,
         boolean blockedBy,
+        Visibility feedVisibility,
+        Visibility pastAlbumVisibility,
         List<ProfilePastAlbumResponse> pastAlbums
 ) {
     public static UserProfileResponse from(
@@ -24,6 +27,8 @@ public record UserProfileResponse(
             int maxStreak,
             boolean blocked,
             boolean blockedBy,
+            Visibility feedVisibility,
+            Visibility pastAlbumVisibility,
             List<ProfilePastAlbumResponse> pastAlbums
     ) {
         return new UserProfileResponse(
@@ -36,6 +41,8 @@ public record UserProfileResponse(
                 maxStreak,
                 blocked,
                 blockedBy,
+                feedVisibility,
+                pastAlbumVisibility,
                 pastAlbums
         );
     }
