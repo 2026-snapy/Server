@@ -68,7 +68,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          password: ${{ secrets.EC2_PASSWORD }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           source: "docker-compose.yml"
           target: ${{ env.REMOTE_APP_DIR }}
 
@@ -107,7 +107,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          password: ${{ secrets.EC2_PASSWORD }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           envs: GHCR_USER,GHCR_TOKEN,DB_USERNAME,DB_PASSWORD,JWT_SECRET_KEY,S3_BUCKET,CLOUDFRONT_URL,IMAGE_NAME,IMAGE_TAG,GRPC_SERVER_HOST,GRPC_SERVER_PORT,GOOGLE_OAUTH_WEB_CLIENT_ID,GOOGLE_OAUTH_WEB_CLIENT_SECRET,GOOGLE_OAUTH_WEB_REDIRECT_URI,GOOGLE_OAUTH_IOS_CLIENT_ID,APPLE_OAUTH_TEAM_ID,APPLE_OAUTH_KEY_ID,APPLE_OAUTH_PRIVATE_KEY,APPLE_OAUTH_BUNDLE_ID,APPLE_OAUTH_SERVICE_ID,APPLE_OAUTH_REDIRECT_URI,APNS_ENABLED,APNS_PRODUCTION,APNS_BUNDLE_ID,FRONTEND_URL,ALIGO_KEY,ALIGO_USER_ID,ALIGO_SENDER,ALIGO_TEST_MODE
           script: |
             set -e
@@ -164,7 +164,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
-          password: ${{ secrets.EC2_PASSWORD }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "Health check 대기 중..."
             for i in $(seq 1 30); do
