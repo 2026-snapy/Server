@@ -65,5 +65,5 @@ volumes:
   mysql-data:
 
 networks:
-  shared-net:
+  snapy-net:
     external: true
