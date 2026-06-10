@@ -6,6 +6,7 @@ import com.gbsw.snapy.domain.notifications.dto.response.UnreadCountResponse;
 import com.gbsw.snapy.domain.notifications.entity.Notification;
 import com.gbsw.snapy.domain.notifications.entity.NotificationType;
 import com.gbsw.snapy.domain.notifications.repository.NotificationRepository;
+import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
 import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
@@ -32,6 +33,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final UserSettingRepository userSettingRepository;
     private final ApnsPushService apnsPushService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -58,7 +60,7 @@ public class NotificationService {
                         .read(false)
                         .build()
         );
-        if (pushEnabled) {
+        if (pushEnabled && isPushEnabled(receiverId)) {
             apnsPushService.sendToUser(receiverId, type);
         }
     }
@@ -86,7 +88,15 @@ public class NotificationService {
         } catch (DataIntegrityViolationException e) {
             return;
         }
-        apnsPushService.sendToUser(receiverId, NotificationType.FEED_LIKE);
+        if (isPushEnabled(receiverId)) {
+            apnsPushService.sendToUser(receiverId, NotificationType.FEED_LIKE);
+        }
+    }
+
+    private boolean isPushEnabled(Long userId) {
+        return userSettingRepository.findById(userId)
+                .map(setting -> setting.isNotificationEnabled())
+                .orElse(true);
     }
 
     private String feedLikeDeduplicationKey(Long receiverId, Long senderId, Long albumId) {
