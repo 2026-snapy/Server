@@ -2,6 +2,8 @@ services:
   db:
     image: mysql:8.0
     container_name: snapy-db
+    networks:
+      - snapy-net
     environment:
       TZ: Asia/Seoul
       MYSQL_DATABASE: snapy
@@ -30,6 +32,8 @@ services:
   app:
     image: ${APP_IMAGE:-ghcr.io/2026-messi-of-coding/server:latest}
     container_name: snapy-app
+    networks:
+      - snapy-net
     ports:
       - "8080:8080"
     volumes:
@@ -59,3 +63,7 @@ services:
 
 volumes:
   mysql-data:
+
+networks:
+  shared-net:
+    external: true
