@@ -3,6 +3,8 @@ package com.gbsw.snapy.domain.notifications.service;
 import com.gbsw.snapy.domain.notifications.entity.Notification;
 import com.gbsw.snapy.domain.notifications.entity.NotificationType;
 import com.gbsw.snapy.domain.notifications.repository.NotificationRepository;
+import com.gbsw.snapy.domain.settings.entity.UserSetting;
+import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.infra.apns.ApnsPushService;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class NotificationServiceTest {
@@ -27,6 +30,9 @@ class NotificationServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserSettingRepository userSettingRepository;
 
     @Mock
     private ApnsPushService apnsPushService;
@@ -87,6 +93,31 @@ class NotificationServiceTest {
 
         notificationService.createFeedLikeIfAbsent(1L, 2L, 100L, 10L);
 
+        verify(apnsPushService, never()).sendToUser(any(), any());
+    }
+
+    @Test
+    void createSkipsPushWhenNotificationsAreDisabled() {
+        UserSetting setting = UserSetting.builder().userId(1L).build();
+        setting.setNotificationEnabled(false);
+        when(userSettingRepository.findById(1L)).thenReturn(Optional.of(setting));
+
+        notificationService.create(1L, 2L, NotificationType.FRIEND_REQUEST, 10L, null);
+
+        verify(notificationRepository).save(any(Notification.class));
+        verify(apnsPushService, never()).sendToUser(any(), any());
+    }
+
+    @Test
+    void createFeedLikeIfAbsentSkipsPushWhenNotificationsAreDisabled() {
+        UserSetting setting = UserSetting.builder().userId(1L).build();
+        setting.setNotificationEnabled(false);
+        when(notificationRepository.existsByDeduplicationKey("FEED_LIKE:1:2:10")).thenReturn(false);
+        when(userSettingRepository.findById(1L)).thenReturn(Optional.of(setting));
+
+        notificationService.createFeedLikeIfAbsent(1L, 2L, 100L, 10L);
+
+        verify(notificationRepository).saveAndFlush(any(Notification.class));
         verify(apnsPushService, never()).sendToUser(any(), any());
     }
 }

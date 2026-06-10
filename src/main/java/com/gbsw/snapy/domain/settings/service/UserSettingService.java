@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.settings.service;
 
 import com.gbsw.snapy.domain.settings.dto.request.UpdatePastAlbumVisibilityRequest;
 import com.gbsw.snapy.domain.settings.dto.request.UpdateFeedVisibilityRequest;
+import com.gbsw.snapy.domain.settings.dto.request.UpdateNotificationEnabledRequest;
 import com.gbsw.snapy.domain.settings.dto.response.UserSettingResponse;
 import com.gbsw.snapy.domain.settings.entity.UserSetting;
 import com.gbsw.snapy.domain.settings.entity.Visibility;
@@ -44,6 +45,12 @@ public class UserSettingService {
         }
         UserSetting setting = getOrCreate(userId);
         setting.setPastAlbumVisibility(request.visibility());
+    }
+
+    @Transactional
+    public void updateNotificationEnabled(Long userId, UpdateNotificationEnabledRequest request) {
+        UserSetting setting = getOrCreate(userId);
+        setting.setNotificationEnabled(request.enabled());
     }
 
     private UserSetting getOrCreate(Long userId) {
