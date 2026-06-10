@@ -2,6 +2,7 @@ package com.gbsw.snapy.domain.settings.controller;
 
 import com.gbsw.snapy.domain.settings.dto.request.UpdatePastAlbumVisibilityRequest;
 import com.gbsw.snapy.domain.settings.dto.request.UpdateFeedVisibilityRequest;
+import com.gbsw.snapy.domain.settings.dto.request.UpdateNotificationEnabledRequest;
 import com.gbsw.snapy.domain.settings.dto.response.UserSettingResponse;
 import com.gbsw.snapy.domain.settings.service.UserSettingService;
 import com.gbsw.snapy.global.common.ApiResponse;
@@ -41,6 +42,15 @@ public class UserSettingController {
             @AuthenticationPrincipal CustomUserPrincipal principal
     ) {
         userSettingService.updatePastAlbumVisibility(principal.getId(), request);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PatchMapping("/notifications")
+    public ResponseEntity<ApiResponse<Void>> updateNotificationEnabled(
+            @Valid @RequestBody UpdateNotificationEnabledRequest request,
+            @AuthenticationPrincipal CustomUserPrincipal principal
+    ) {
+        userSettingService.updateNotificationEnabled(principal.getId(), request);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
