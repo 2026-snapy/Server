@@ -14,6 +14,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class OAuthController {
 
     private final GoogleOAuthService googleOAuthService;
@@ -72,6 +74,7 @@ public class OAuthController {
             response.sendRedirect(redirectUrl);
 
         } catch (Exception e) {
+            log.error("Google OAuth callback failed", e);
             response.sendRedirect(frontendUrl + "/auth/error?reason=server_error");
         }
     }
@@ -127,6 +130,7 @@ public class OAuthController {
             response.sendRedirect(redirectUrl);
 
         } catch (Exception e) {
+            log.error("Apple OAuth callback failed", e);
             response.sendRedirect(frontendUrl + "/auth/error?reason=server_error");
         }
     }
