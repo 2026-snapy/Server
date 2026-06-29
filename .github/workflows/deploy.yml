@@ -123,10 +123,11 @@ jobs:
               echo "FIREBASE_SERVICE_ACCOUNT_BASE64 is required when FIREBASE_ENABLED=true"
               exit 1
             elif [ -n "${FIREBASE_SERVICE_ACCOUNT_BASE64}" ]; then
-              printf '%s' "${FIREBASE_SERVICE_ACCOUNT_BASE64}" | base64 -d > certs/firebase-service-account.json
+              printf '%s' "${FIREBASE_SERVICE_ACCOUNT_BASE64}" | base64 -d | sudo tee certs/firebase-service-account.json > /dev/null
             else
-              printf '{}' > certs/firebase-service-account.json
+              printf '{}' | sudo tee certs/firebase-service-account.json > /dev/null
             fi
+            sudo chmod 600 certs/firebase-service-account.json
 
             cat > .env <<EOF
             APP_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}
