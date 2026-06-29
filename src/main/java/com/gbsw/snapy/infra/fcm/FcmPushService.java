@@ -7,6 +7,7 @@ import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.Notification;
 import com.gbsw.snapy.domain.device.entity.DevicePlatform;
 import com.gbsw.snapy.domain.device.entity.DeviceToken;
+import com.gbsw.snapy.domain.device.entity.DeviceTokenEnvironment;
 import com.gbsw.snapy.domain.device.repository.DeviceTokenRepository;
 import com.gbsw.snapy.domain.notifications.entity.NotificationType;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,12 @@ public class FcmPushService {
             return;
         }
 
-        List<DeviceToken> deviceTokens = deviceTokenRepository.findByUserIdAndPlatform(userId, DevicePlatform.ANDROID);
+        DeviceTokenEnvironment environment = fcmProperties.isProduction()
+                ? DeviceTokenEnvironment.PRODUCTION
+                : DeviceTokenEnvironment.SANDBOX;
+
+        List<DeviceToken> deviceTokens = deviceTokenRepository.findByUserIdAndPlatformAndEnvironment(
+                userId, DevicePlatform.ANDROID, environment);
         for (DeviceToken deviceToken : deviceTokens) {
             try {
                 firebaseMessaging.send(Message.builder()

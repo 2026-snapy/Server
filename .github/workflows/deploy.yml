@@ -100,6 +100,7 @@ jobs:
           APNS_PRODUCTION: ${{ secrets.APNS_PRODUCTION }}
           APNS_BUNDLE_ID: ${{ secrets.APNS_BUNDLE_ID }}
           FIREBASE_ENABLED: ${{ secrets.FIREBASE_ENABLED }}
+          FIREBASE_PRODUCTION: ${{ secrets.FIREBASE_PRODUCTION }}
           FIREBASE_SERVICE_ACCOUNT_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BASE64 }}
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
           ALIGO_KEY: ${{ secrets.ALIGO_KEY }}
@@ -110,20 +111,23 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: GHCR_USER,GHCR_TOKEN,DB_USERNAME,DB_PASSWORD,JWT_SECRET_KEY,S3_BUCKET,CLOUDFRONT_URL,IMAGE_NAME,IMAGE_TAG,GRPC_SERVER_HOST,GRPC_SERVER_PORT,GOOGLE_OAUTH_WEB_CLIENT_ID,GOOGLE_OAUTH_WEB_CLIENT_SECRET,GOOGLE_OAUTH_WEB_REDIRECT_URI,GOOGLE_OAUTH_IOS_CLIENT_ID,APPLE_OAUTH_TEAM_ID,APPLE_OAUTH_KEY_ID,APPLE_OAUTH_PRIVATE_KEY,APPLE_OAUTH_BUNDLE_ID,APPLE_OAUTH_SERVICE_ID,APPLE_OAUTH_REDIRECT_URI,APNS_ENABLED,APNS_PRODUCTION,APNS_BUNDLE_ID,FIREBASE_ENABLED,FIREBASE_SERVICE_ACCOUNT_BASE64,FRONTEND_URL,ALIGO_KEY,ALIGO_USER_ID,ALIGO_SENDER,ALIGO_TEST_MODE
+          envs: GHCR_USER,GHCR_TOKEN,DB_USERNAME,DB_PASSWORD,JWT_SECRET_KEY,S3_BUCKET,CLOUDFRONT_URL,IMAGE_NAME,IMAGE_TAG,GRPC_SERVER_HOST,GRPC_SERVER_PORT,GOOGLE_OAUTH_WEB_CLIENT_ID,GOOGLE_OAUTH_WEB_CLIENT_SECRET,GOOGLE_OAUTH_WEB_REDIRECT_URI,GOOGLE_OAUTH_IOS_CLIENT_ID,APPLE_OAUTH_TEAM_ID,APPLE_OAUTH_KEY_ID,APPLE_OAUTH_PRIVATE_KEY,APPLE_OAUTH_BUNDLE_ID,APPLE_OAUTH_SERVICE_ID,APPLE_OAUTH_REDIRECT_URI,APNS_ENABLED,APNS_PRODUCTION,APNS_BUNDLE_ID,FIREBASE_ENABLED,FIREBASE_PRODUCTION,FIREBASE_SERVICE_ACCOUNT_BASE64,FRONTEND_URL,ALIGO_KEY,ALIGO_USER_ID,ALIGO_SENDER,ALIGO_TEST_MODE
           script: |
             set -e
             cd ${{ env.REMOTE_APP_DIR }}
 
             # .env 파일 생성 (권한 600)
+            umask 077
             mkdir -p certs
-            if [ -n "${FIREBASE_SERVICE_ACCOUNT_BASE64}" ]; then
+            if [ "${FIREBASE_ENABLED}" = "true" ] && [ -z "${FIREBASE_SERVICE_ACCOUNT_BASE64}" ]; then
+              echo "FIREBASE_SERVICE_ACCOUNT_BASE64 is required when FIREBASE_ENABLED=true"
+              exit 1
+            elif [ -n "${FIREBASE_SERVICE_ACCOUNT_BASE64}" ]; then
               printf '%s' "${FIREBASE_SERVICE_ACCOUNT_BASE64}" | base64 -d > certs/firebase-service-account.json
             else
               printf '{}' > certs/firebase-service-account.json
             fi
 
-            umask 077
             cat > .env <<EOF
             APP_IMAGE=${IMAGE_NAME}:${IMAGE_TAG}
             SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
@@ -149,6 +153,7 @@ jobs:
             APNS_CERTIFICATE_PATH=/app/certs/apns.pem
             APNS_CERTIFICATE_PASSWORD=
             FIREBASE_ENABLED=${FIREBASE_ENABLED}
+            FIREBASE_PRODUCTION=${FIREBASE_PRODUCTION}
             FIREBASE_SERVICE_ACCOUNT_PATH=/app/certs/firebase-service-account.json
             FRONTEND_URL=${FRONTEND_URL}
             ALIGO_KEY=${ALIGO_KEY}
@@ -161,6 +166,7 @@ jobs:
             echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
 
             # 이미지 pull & 컨테이너 교체
+            docker network create snapy-net || true
             docker compose pull
             docker compose up -d --remove-orphans
 

@@ -10,5 +10,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class FcmProperties {
 
     private boolean enabled = false;
+    private boolean production = false;
     private String serviceAccountPath;
 }

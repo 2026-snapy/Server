@@ -8,6 +8,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -19,6 +20,10 @@ public class FcmConfig {
     @Bean
     @ConditionalOnProperty(prefix = "firebase", name = "enabled", havingValue = "true")
     public FirebaseMessaging firebaseMessaging(FcmProperties properties) throws IOException {
+        if (!StringUtils.hasText(properties.getServiceAccountPath())) {
+            throw new IllegalStateException("firebase.service-account-path is required when firebase.enabled=true");
+        }
+
         FirebaseApp app = FirebaseApp.getApps().isEmpty()
                 ? FirebaseApp.initializeApp(FirebaseOptions.builder()
                 .setCredentials(GoogleCredentials.fromStream(new FileInputStream(properties.getServiceAccountPath())))
