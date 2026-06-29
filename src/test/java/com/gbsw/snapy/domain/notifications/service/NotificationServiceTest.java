@@ -6,7 +6,7 @@ import com.gbsw.snapy.domain.notifications.repository.NotificationRepository;
 import com.gbsw.snapy.domain.settings.entity.UserSetting;
 import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
-import com.gbsw.snapy.infra.apns.ApnsPushService;
+import com.gbsw.snapy.infra.push.PushNotificationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -35,7 +35,7 @@ class NotificationServiceTest {
     private UserSettingRepository userSettingRepository;
 
     @Mock
-    private ApnsPushService apnsPushService;
+    private PushNotificationService pushNotificationService;
 
     @InjectMocks
     private NotificationService notificationService;
@@ -47,7 +47,7 @@ class NotificationServiceTest {
         notificationService.createFeedLikeIfAbsent(1L, 2L, 100L, 10L);
 
         verify(notificationRepository, never()).saveAndFlush(any(Notification.class));
-        verify(apnsPushService, never()).sendToUser(any(), any());
+        verify(pushNotificationService, never()).sendToUser(any(), any());
     }
 
     @Test
@@ -63,7 +63,7 @@ class NotificationServiceTest {
         assertThat(notification.getReferenceId()).isEqualTo(10L);
         assertThat(notification.getReferenceType()).isNull();
         assertThat(notification.isRead()).isFalse();
-        verify(apnsPushService, never()).sendToUser(any(), any());
+        verify(pushNotificationService, never()).sendToUser(any(), any());
     }
 
     @Test
@@ -82,7 +82,7 @@ class NotificationServiceTest {
         assertThat(notification.getReferenceType()).isEqualTo("10");
         assertThat(notification.getDeduplicationKey()).isEqualTo("FEED_LIKE:1:2:10");
         assertThat(notification.isRead()).isFalse();
-        verify(apnsPushService).sendToUser(1L, NotificationType.FEED_LIKE);
+        verify(pushNotificationService).sendToUser(1L, NotificationType.FEED_LIKE);
     }
 
     @Test
@@ -93,7 +93,7 @@ class NotificationServiceTest {
 
         notificationService.createFeedLikeIfAbsent(1L, 2L, 100L, 10L);
 
-        verify(apnsPushService, never()).sendToUser(any(), any());
+        verify(pushNotificationService, never()).sendToUser(any(), any());
     }
 
     @Test
@@ -105,7 +105,7 @@ class NotificationServiceTest {
         notificationService.create(1L, 2L, NotificationType.FRIEND_REQUEST, 10L, null);
 
         verify(notificationRepository).save(any(Notification.class));
-        verify(apnsPushService, never()).sendToUser(any(), any());
+        verify(pushNotificationService, never()).sendToUser(any(), any());
     }
 
     @Test
@@ -118,6 +118,6 @@ class NotificationServiceTest {
         notificationService.createFeedLikeIfAbsent(1L, 2L, 100L, 10L);
 
         verify(notificationRepository).saveAndFlush(any(Notification.class));
-        verify(apnsPushService, never()).sendToUser(any(), any());
+        verify(pushNotificationService, never()).sendToUser(any(), any());
     }
 }

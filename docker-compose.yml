@@ -38,6 +38,7 @@ services:
       - "8080:8080"
     volumes:
       - /home/ec2-user/snapy-app/certs/apns.pem:/app/certs/apns.pem:ro
+      - /home/ec2-user/snapy-app/certs/firebase-service-account.json:/app/certs/firebase-service-account.json:ro
       - /home/ec2-user/snapy-app/logs:/app/logs
     env_file:
       - .env
