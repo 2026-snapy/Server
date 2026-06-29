@@ -20,7 +20,7 @@ FROM eclipse-temurin:21-jre AS runtime
 ENV TZ=Asia/Seoul \
     JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
-RUN groupadd --system spring && useradd --system --gid spring spring
+RUN groupadd --system --gid 10001 spring && useradd --system --uid 10001 --gid spring spring
 
 WORKDIR /app
 COPY --from=build /workspace/build/libs/messi-of-coding-0.0.1-SNAPSHOT.jar app.jar
