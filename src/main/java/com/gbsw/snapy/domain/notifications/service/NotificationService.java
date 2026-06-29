@@ -11,7 +11,7 @@ import com.gbsw.snapy.domain.users.entity.User;
 import com.gbsw.snapy.domain.users.repository.UserRepository;
 import com.gbsw.snapy.global.exception.CustomException;
 import com.gbsw.snapy.global.exception.ErrorCode;
-import com.gbsw.snapy.infra.apns.ApnsPushService;
+import com.gbsw.snapy.infra.push.PushNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +34,7 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
     private final UserSettingRepository userSettingRepository;
-    private final ApnsPushService apnsPushService;
+    private final PushNotificationService pushNotificationService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void create(Long receiverId, Long senderId, NotificationType type,
@@ -61,7 +61,7 @@ public class NotificationService {
                         .build()
         );
         if (pushEnabled && isPushEnabled(receiverId)) {
-            apnsPushService.sendToUser(receiverId, type);
+            pushNotificationService.sendToUser(receiverId, type);
         }
     }
 
@@ -89,7 +89,7 @@ public class NotificationService {
             return;
         }
         if (isPushEnabled(receiverId)) {
-            apnsPushService.sendToUser(receiverId, NotificationType.FEED_LIKE);
+            pushNotificationService.sendToUser(receiverId, NotificationType.FEED_LIKE);
         }
     }
 
