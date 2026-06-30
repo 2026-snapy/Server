@@ -103,8 +103,13 @@ public class S3Service {
             throw new CustomException(ErrorCode.AUDIO_EMPTY);
         }
 
+    List<String> allowedContentTypes = List.of(".m4a", ".webm");
         String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null || !originalFilename.toLowerCase().endsWith(".m4a")) {
+        if (originalFilename == null) {
+            throw new CustomException(ErrorCode.INVALID_AUDIO_TYPE);
+        }
+        String lowerFilename = originalFilename.toLowerCase();
+        if (allowedContentTypes.stream().noneMatch(lowerFilename::endsWith)) {
             throw new CustomException(ErrorCode.INVALID_AUDIO_TYPE);
         }
 
