@@ -106,9 +106,8 @@ public class GoogleOAuthService {
     // ── 회원가입 (AuthService.register 와 동일한 역할) ─────────────────────────
 
     private User registerOAuthUser(GoogleUserInfo userInfo) {
-        // 같은 이메일로 일반 가입한 계정이 이미 있으면 오류
         userRepository.findByEmail(userInfo.getEmail()).ifPresent(u -> {
-            throw new CustomException(ErrorCode.GOOGLE_LOGIN_FAILED);
+            throw new CustomException(ErrorCode.EMAIL_REGISTERED_WITH_DIFFERENT_PROVIDER);
         });
 
         User user = User.builder()
