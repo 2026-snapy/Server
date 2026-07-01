@@ -22,7 +22,8 @@ public class PhoneRegistrationFilter extends OncePerRequestFilter {
 
     private static final Set<String> PHONE_EXEMPT_PATHS = Set.of(
             "/api/users/me/phone",
-            "/api/users/me/phone/verification-code"
+            "/api/users/me/phone/verification-code",
+            "/api/users/handle/check"
     );
 
     private final ObjectMapper objectMapper;

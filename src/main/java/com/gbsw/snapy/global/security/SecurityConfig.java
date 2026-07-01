@@ -50,6 +50,7 @@ public class SecurityConfig {
             "/v3/api-docs/**",
             "/swagger-ui.html",
             "/api/health",
+            "/api/users/handle/check",
             "/.well-known/apple-app-site-association"
     };
 
