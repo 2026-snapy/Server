@@ -35,8 +35,6 @@ import java.util.UUID;
 public class GoogleOAuthService {
 
     private static final String GOOGLE_TOKEN_URL    = "https://oauth2.googleapis.com/token";
-    private static final String GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
-    private static final String GOOGLE_TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo";
 
     private final UserRepository userRepository;
     private final UserSettingRepository userSettingRepository;
@@ -44,6 +42,7 @@ public class GoogleOAuthService {
     private final JwtProvider jwtProvider;
     private final JwtProperties jwtProperties;
     private final GoogleOAuthProperties googleOAuthProperties;
+    private final GoogleIdTokenValidator googleIdTokenValidator;
 
     private final RestClient restClient = RestClient.create();
 
@@ -52,7 +51,8 @@ public class GoogleOAuthService {
     @Transactional
     public LoginServiceResult processWebLogin(String code) {
         GoogleTokenResponse tokenResponse = exchangeCodeForToken(code);
-        GoogleUserInfo userInfo = getUserInfo(tokenResponse.getAccessToken());
+        GoogleUserInfo userInfo = googleIdTokenValidator.verify(
+                tokenResponse.getIdToken(), googleOAuthProperties.getWeb().getClientId());
         return processOAuthLogin(userInfo);
     }
 
@@ -64,7 +64,21 @@ public class GoogleOAuthService {
      */
     @Transactional
     public LoginServiceResult processIosLogin(String idToken) {
-        GoogleUserInfo userInfo = verifyIdToken(idToken);
+        GoogleUserInfo userInfo = googleIdTokenValidator.verify(
+                idToken, googleOAuthProperties.getIos().getClientId());
+        return processOAuthLogin(userInfo);
+    }
+
+    // ── Android ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Android: Credential Manager에서 받은 ID token으로 로그인.
+     * Android의 serverClientId는 서버의 Web OAuth client ID와 같아야 한다.
+     */
+    @Transactional
+    public LoginServiceResult processAndroidLogin(String idToken) {
+        GoogleUserInfo userInfo = googleIdTokenValidator.verify(
+                idToken, googleOAuthProperties.getWeb().getClientId());
         return processOAuthLogin(userInfo);
     }
 
@@ -144,43 +158,6 @@ public class GoogleOAuthService {
                     .body(params)
                     .retrieve()
                     .body(GoogleTokenResponse.class);
-        } catch (Exception e) {
-            throw new CustomException(ErrorCode.GOOGLE_LOGIN_FAILED);
-        }
-    }
-
-    private GoogleUserInfo getUserInfo(String accessToken) {
-        try {
-            return restClient.get()
-                    .uri(GOOGLE_USERINFO_URL)
-                    .header("Authorization", "Bearer " + accessToken)
-                    .retrieve()
-                    .body(GoogleUserInfo.class);
-        } catch (Exception e) {
-            throw new CustomException(ErrorCode.GOOGLE_LOGIN_FAILED);
-        }
-    }
-
-    private GoogleUserInfo verifyIdToken(String idToken) {
-        try {
-            GoogleUserInfo userInfo = restClient.get()
-                    .uri(GOOGLE_TOKENINFO_URL + "?id_token=" + idToken)
-                    .retrieve()
-                    .body(GoogleUserInfo.class);
-
-            if (userInfo == null || !userInfo.isEmailVerified()) {
-                throw new CustomException(ErrorCode.GOOGLE_LOGIN_FAILED);
-            }
-
-            String iosClientId = googleOAuthProperties.getIos().getClientId();
-            if (iosClientId != null && !iosClientId.isBlank()
-                    && !iosClientId.equals(userInfo.getAud())) {
-                throw new CustomException(ErrorCode.GOOGLE_LOGIN_FAILED);
-            }
-
-            return userInfo;
-        } catch (CustomException e) {
-            throw e;
         } catch (Exception e) {
             throw new CustomException(ErrorCode.GOOGLE_LOGIN_FAILED);
         }

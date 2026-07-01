@@ -1,0 +1,89 @@
+package com.gbsw.snapy.domain.auth.service;
+
+import com.gbsw.snapy.domain.auth.dto.internal.GoogleUserInfo;
+import com.gbsw.snapy.domain.auth.entity.OAuthProvider;
+import com.gbsw.snapy.domain.auth.repository.RefreshTokenRepository;
+import com.gbsw.snapy.domain.settings.repository.UserSettingRepository;
+import com.gbsw.snapy.domain.users.entity.User;
+import com.gbsw.snapy.domain.users.repository.UserRepository;
+import com.gbsw.snapy.global.oauth.GoogleOAuthProperties;
+import com.gbsw.snapy.global.security.jwt.JwtProperties;
+import com.gbsw.snapy.global.security.jwt.JwtProvider;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class GoogleOAuthServiceTest {
+
+    @Mock private UserRepository userRepository;
+    @Mock private UserSettingRepository userSettingRepository;
+    @Mock private RefreshTokenRepository refreshTokenRepository;
+    @Mock private JwtProvider jwtProvider;
+    @Mock private JwtProperties jwtProperties;
+    @Mock private GoogleOAuthProperties googleOAuthProperties;
+    @Mock private GoogleIdTokenValidator googleIdTokenValidator;
+
+    @InjectMocks
+    private GoogleOAuthService googleOAuthService;
+
+    private final GoogleOAuthProperties.Web web = new GoogleOAuthProperties.Web();
+    private final GoogleOAuthProperties.Ios ios = new GoogleOAuthProperties.Ios();
+    private GoogleUserInfo userInfo;
+
+    @BeforeEach
+    void setUp() {
+        web.setClientId("web-client-id");
+        ios.setClientId("ios-client-id");
+        userInfo = new GoogleUserInfo(
+                "google-sub", "user@example.com", "name", null, null, true);
+
+        User user = User.builder()
+                .id(1L)
+                .handle("g_google")
+                .username("name")
+                .email("user@example.com")
+                .provider(OAuthProvider.GOOGLE)
+                .providerId("google-sub")
+                .build();
+
+        when(userRepository.findByProviderIdAndProvider("google-sub", OAuthProvider.GOOGLE))
+                .thenReturn(Optional.of(user));
+        when(jwtProvider.generateAccessToken(1L)).thenReturn("access-token");
+        when(jwtProvider.generateRefreshToken(1L)).thenReturn("refresh-token");
+        when(jwtProperties.getRefreshTokenExpiration()).thenReturn(60_000L);
+    }
+
+    @Test
+    void androidLoginVerifiesTokenWithWebClientId() {
+        when(googleOAuthProperties.getWeb()).thenReturn(web);
+        when(googleIdTokenValidator.verify("android-id-token", "web-client-id"))
+                .thenReturn(userInfo);
+
+        googleOAuthService.processAndroidLogin("android-id-token");
+
+        verify(googleIdTokenValidator).verify("android-id-token", "web-client-id");
+        verify(refreshTokenRepository).save(any());
+    }
+
+    @Test
+    void iosLoginStillVerifiesTokenWithIosClientId() {
+        when(googleOAuthProperties.getIos()).thenReturn(ios);
+        when(googleIdTokenValidator.verify("ios-id-token", "ios-client-id"))
+                .thenReturn(userInfo);
+
+        googleOAuthService.processIosLogin("ios-id-token");
+
+        verify(googleIdTokenValidator).verify("ios-id-token", "ios-client-id");
+        verify(refreshTokenRepository).save(any());
+    }
+}
