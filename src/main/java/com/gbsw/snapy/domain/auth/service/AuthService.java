@@ -5,6 +5,7 @@ import com.gbsw.snapy.domain.auth.dto.request.RegisterRequest;
 import com.gbsw.snapy.domain.auth.dto.response.LoginServiceResult;
 import com.gbsw.snapy.domain.auth.dto.response.RefreshAccessTokenResponse;
 import com.gbsw.snapy.domain.auth.dto.response.RegisterResponse;
+import com.gbsw.snapy.domain.auth.entity.OAuthProvider;
 import com.gbsw.snapy.domain.auth.entity.RefreshToken;
 import com.gbsw.snapy.domain.auth.repository.RefreshTokenRepository;
 import com.gbsw.snapy.domain.settings.entity.UserSetting;
@@ -56,10 +57,15 @@ public class AuthService {
         return RegisterResponse.from(user);
     }
 
+    // NOTE: 일반회원 로그인
     @Transactional
     public LoginServiceResult login(LoginRequest dto) {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
+
+        if (user.getProvider() != OAuthProvider.LOCAL) {
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
+        }
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_CREDENTIALS);

@@ -28,6 +28,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."),
     DELETED_USER(HttpStatus.NOT_FOUND, "탈퇴한 사용자입니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "이메일 또는 비밀번호가 올바르지 않습니다."),
+    EMAIL_REGISTERED_WITH_DIFFERENT_PROVIDER(HttpStatus.CONFLICT, "해당 이메일은 이미 다른 방식으로 가입되어 있습니다."),
     DUPLICATE_HANDLE(HttpStatus.CONFLICT, "이미 사용 중인 핸들입니다."),
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "이미 사용 중인 이메일입니다."),
     DUPLICATE_PHONE(HttpStatus.CONFLICT, "이미 사용 중인 전화번호입니다."),

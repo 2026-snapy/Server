@@ -105,7 +105,7 @@ public class AppleOAuthService {
         }
 
         userRepository.findByEmail(userInfo.getEmail()).ifPresent(u -> {
-            throw new CustomException(ErrorCode.APPLE_LOGIN_FAILED);
+            throw new CustomException(ErrorCode.EMAIL_REGISTERED_WITH_DIFFERENT_PROVIDER);
         });
 
         User user = User.builder()

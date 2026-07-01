@@ -1,6 +1,7 @@
 package com.gbsw.snapy.domain.auth.controller;
 
 import com.gbsw.snapy.domain.auth.dto.request.AppleIosLoginRequest;
+import com.gbsw.snapy.domain.auth.dto.request.GoogleAndroidLoginRequest;
 import com.gbsw.snapy.domain.auth.dto.request.GoogleIosLoginRequest;
 import com.gbsw.snapy.domain.auth.dto.response.LoginResponse;
 import com.gbsw.snapy.domain.auth.dto.response.LoginServiceResult;
@@ -84,6 +85,18 @@ public class OAuthController {
             @Valid @RequestBody GoogleIosLoginRequest request
     ) {
         LoginServiceResult result = googleOAuthService.processIosLogin(request.getIdToken());
+        return ResponseEntity.ok(ApiResponse.success(
+                new LoginResponse(result.accessToken(), result.refreshToken())
+        ));
+    }
+
+    // ── Android ──────────────────────────────────────────────────────────────────
+
+    @PostMapping("/api/auth/google/android")
+    public ResponseEntity<ApiResponse<LoginResponse>> handleAndroidLogin(
+            @Valid @RequestBody GoogleAndroidLoginRequest request
+    ) {
+        LoginServiceResult result = googleOAuthService.processAndroidLogin(request.getIdToken());
         return ResponseEntity.ok(ApiResponse.success(
                 new LoginResponse(result.accessToken(), result.refreshToken())
         ));
