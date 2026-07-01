@@ -110,9 +110,14 @@ public class GoogleOAuthService {
             throw new CustomException(ErrorCode.EMAIL_REGISTERED_WITH_DIFFERENT_PROVIDER);
         });
 
+        String username = userInfo.getName();
+        if (username == null || username.isBlank()) {
+            username = "Snapy User";
+        }
+
         User user = User.builder()
                 .handle(generateUniqueHandle(userInfo.getSub()))
-                .username(userInfo.getName())
+                .username(username)
                 .email(userInfo.getEmail())
                 .provider(OAuthProvider.GOOGLE)
                 .providerId(userInfo.getSub())

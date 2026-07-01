@@ -15,13 +15,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -98,6 +101,33 @@ class GoogleOAuthServiceTest {
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.EMAIL_REGISTERED_WITH_DIFFERENT_PROVIDER);
+    }
+
+    @Test
+    void newGoogleUserWithoutNameUsesFallbackUsername() {
+        GoogleUserInfo userWithoutName = new GoogleUserInfo(
+                "google-sub", "user@example.com", null, null, null, true);
+
+        when(googleOAuthProperties.getWeb()).thenReturn(web);
+        when(googleIdTokenValidator.verify("android-id-token", "web-client-id"))
+                .thenReturn(userWithoutName);
+        when(userRepository.findByProviderIdAndProvider("google-sub", OAuthProvider.GOOGLE))
+                .thenReturn(Optional.empty());
+        when(userRepository.findByEmail("user@example.com")).thenReturn(Optional.empty());
+        doAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(1L);
+            return user;
+        }).when(userRepository).save(any(User.class));
+        when(jwtProvider.generateAccessToken(1L)).thenReturn("access-token");
+        when(jwtProvider.generateRefreshToken(1L)).thenReturn("refresh-token");
+        when(jwtProperties.getRefreshTokenExpiration()).thenReturn(60_000L);
+
+        googleOAuthService.processAndroidLogin("android-id-token");
+
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(userCaptor.capture());
+        assertThat(userCaptor.getValue().getUsername()).isEqualTo("Google User");
     }
 
     private void stubExistingUserLogin() {

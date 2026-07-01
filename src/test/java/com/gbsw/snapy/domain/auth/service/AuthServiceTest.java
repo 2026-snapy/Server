@@ -38,7 +38,7 @@ class AuthServiceTest {
     private AuthService authService;
 
     @Test
-    void localLoginWithEmailRegisteredByOAuthThrowsDedicatedError() {
+    void localLoginWithEmailRegisteredByOAuthDoesNotRevealProvider() {
         LoginRequest request = mock(LoginRequest.class);
         User googleUser = User.builder()
                 .id(1L)
@@ -55,7 +55,7 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(CustomException.class)
                 .extracting("errorCode")
-                .isEqualTo(ErrorCode.EMAIL_REGISTERED_WITH_DIFFERENT_PROVIDER);
+                .isEqualTo(ErrorCode.INVALID_CREDENTIALS);
         verifyNoInteractions(passwordEncoder, jwtProvider, refreshTokenRepository);
     }
 }

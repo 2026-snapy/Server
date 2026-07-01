@@ -64,7 +64,7 @@ public class AuthService {
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_CREDENTIALS));
 
         if (user.getProvider() != OAuthProvider.LOCAL) {
-            throw new CustomException(ErrorCode.EMAIL_REGISTERED_WITH_DIFFERENT_PROVIDER);
+            throw new CustomException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
